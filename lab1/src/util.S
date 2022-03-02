@@ -1,14 +1,14 @@
-.globl put
+.global put
 put:
 	str w1,[x0]
 	ret
 
-.globl get
+.global get
 get:
 	ldr w0,[x0]
 	ret
 
-.globl delay
+.global delay
 delay:
 	subs x0, x0, #1
 	bne delay
