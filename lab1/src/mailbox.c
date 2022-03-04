@@ -35,9 +35,8 @@ void mailbox_call()
     return;
 }
 
-// Response
-// Length: 8
-// u64: board serial
+// https://github.com/raspberrypi/firmware/wiki/Mailbox-property-interface
+// Length: 8, u64: board serial
 unsigned int get_board_revision()
 {
     // unsigned int mailbox[7];
@@ -56,10 +55,7 @@ unsigned int get_board_revision()
     return mailbox[5]; // it should be 0xa020d3 for rpi3 b+
 }
 
-// Response
-// Length: 8
-// u32: base address in bytes
-// u32: size in bytes
+// Length: 8, u32: base address in bytes, u32: size in bytes
 // ARM memory base address and size
 struct arm_memory get_arm_memory()
 {
@@ -75,11 +71,9 @@ struct arm_memory get_arm_memory()
     // tags end
     mailbox[7] = END_TAG;
 
-    mailbox_call(mailbox); // message passing procedure call, you should implement it following the 6 steps provided above.
+    mailbox_call(mailbox);
 
     struct arm_memory result = { .base_addr = mailbox[5], .size = mailbox[6]};
-    // result->base_addr = mailbox[5];
-    // result->size = mailbox[6];
     
     return result;
 }

@@ -6,7 +6,7 @@ void uart_init ( void )
     // Initialization
     put(AUX_ENABLES, 1);        // Enable mini UART, Then mini UART register can be accessed
     put(AUX_MU_CNTL_REG, 0);    // Disable transmitter and receiver during configuration
-    put(AUX_MU_IER_REG, 3);     // Disable interrupt because currently you don’t need interrupt
+    put(AUX_MU_IER_REG, 0);     // Disable interrupt because currently you don’t need interrupt
     put(AUX_MU_LCR_REG, 3);     // Set the data size to 8 bit
     put(AUX_MU_MCR_REG, 0);     // Don’t need auto flow control
     put(AUX_MU_BAUD_REG, 270);  // Set baud rate to 115200
