@@ -42,9 +42,10 @@
 
 void uart_init (void);
 char uart_recv (void);
+void uart_recvn(char *buf, int len);
+void uart_recvline(char* str);
 void uart_send (char c);
 void uart_sendline(char* str);
-void uart_recvline(char* str);
 void uart_send_hex(unsigned int num);
 
 #endif  /*_MINI_UART_H */
