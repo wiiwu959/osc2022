@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stddef.h>
 
 // https://code.woboq.org/userspace/glibc/string/strcmp.c.html
 int strcmp(char *a, char *b) {
@@ -14,13 +15,13 @@ int strcmp(char *a, char *b) {
     return c1 - c2;
 }
 
-int strncmp(char *s1, char *s2, unsigned long n)
+int strncmp(char *s1, char *s2, size_t n)
 {
     unsigned char c1 = '\0';
     unsigned char c2 = '\0';
     if (n >= 4)
     {
-        unsigned long n4 = n >> 2;
+        unsigned int n4 = n >> 2;
         do
             {
             c1 = (unsigned char) *s1++;

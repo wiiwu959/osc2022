@@ -1,5 +1,9 @@
 #ifndef _CPIO_H
 #define _CPIO_H
+
+#define CPIO_LOC 0x8000000
+// #define CPIO_LOC 0x20000000
+
 // https://www.freebsd.org/cgi/man.cgi?query=cpio&sektion=5
 struct cpio_newc_header {
     char c_magic[6];

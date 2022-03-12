@@ -28,8 +28,7 @@ int cpio_align(int num, int base)
 
 void cpio_list()
 {
-    // struct cpio_newc_header *ramfs = (struct cpio_newc_header *)0x20000000;
-    struct cpio_newc_header *ramfs = (struct cpio_newc_header *)0x8000000;
+    struct cpio_newc_header *ramfs = (struct cpio_newc_header *)CPIO_LOC;
     char* ptr = (char*)ramfs;
     while (1) {
         ramfs = (struct cpio_newc_header *)ptr;
@@ -58,8 +57,7 @@ void cpio_list()
 
 void cpio_cat(char* catfile)
 {
-    // struct cpio_newc_header *ramfs = (struct cpio_newc_header *)0x20000000;
-    struct cpio_newc_header *ramfs = (struct cpio_newc_header *)0x8000000;
+    struct cpio_newc_header *ramfs = (struct cpio_newc_header *)CPIO_LOC;
     char* ptr = (char*)ramfs;
     while (1) {
         ramfs = (struct cpio_newc_header *)ptr;
