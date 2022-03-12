@@ -47,7 +47,7 @@ kernel8.img: $(KERNEL_DIR)/linker.ld $(KERNEL_OBJ_FILES) $(OBJ_FILES)
 	$(CROSS_COMPILE)objcopy $(BUILD_DIR)/kernel8.elf -O binary kernel8.img
 
 run: kernel8.img
-	qemu-system-aarch64 -M raspi3 -kernel kernel8.img -display none -serial null -serial stdio -initrd initramfs.cpio
+	qemu-system-aarch64 -M raspi3 -kernel kernel8.img -display none -serial null -serial stdio -initrd ./config/initramfs.cpio -dtb ./config/bcm2710-rpi-3-b-plus.dtb
 
 # for building bootloader
 $(BUILD_DIR)/$(BOOTLOADER_DIR)/%_c.o: $(BOOTLOADER_DIR)/%.c

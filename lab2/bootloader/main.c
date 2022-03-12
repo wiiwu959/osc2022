@@ -26,7 +26,8 @@ void bootloader_main(void)
     uart_sendline("\r\n");
 
     for (int i = 0; i < kernel_size; i++) {
-        *kernel++;
+        *kernel = uart_recv();
+        kernel++;
     }
 
     uart_sendline("\r\n");
