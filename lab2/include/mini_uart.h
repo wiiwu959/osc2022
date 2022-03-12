@@ -40,11 +40,12 @@
 #define GPPUDCLK0               (MMIO_BASE+0x00200098)
 #define GPPUDCLK1               (MMIO_BASE+0x0020009C)
 
-void uart_init (void);
-char uart_recv (void);
+void uart_init(void);
+char uart_recv(void);
 void uart_recvn(char *buf, int len);
 void uart_recvline(char* str);
-void uart_send (char c);
+void uart_send(char c);
+void uart_sendn(char *str, int len);
 void uart_sendline(char* str);
 void uart_send_hex(unsigned int num);
 

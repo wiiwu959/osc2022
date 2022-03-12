@@ -10,8 +10,8 @@ with open('/dev/ttyUSB0', "wb", buffering = 0) as tty:
     tty.write(sending)
     tty.flush()
 
-    time.sleep(1)
+    # time.sleep(1)
     
     # for i in kernel_raw:
-    tty.write(kernel_raw)
-    tty.flush()
+    # tty.write(kernel_raw)
+    # tty.flush()

@@ -3,8 +3,8 @@
 #include <mailbox.h>
 #include <string.h>
 
-extern unsigned int _kernel;
-extern char _start;
+// extern unsigned int _kernel[];
+// extern char _start;
 char buf[0x200];
 
 void bootloader_main(void)
@@ -16,12 +16,8 @@ void bootloader_main(void)
     int kernel_size;
     char* kernel = (char *)0x80000;
 
-    uart_sendline("Bootloader base : ");
-    uart_send_hex((unsigned int)&_start);
-    uart_sendline("\r\n");
-
-    uart_sendline("Kernel base : ");
-    uart_send_hex((unsigned int)_kernel);
+    uart_sendline("bootloader_main : ");
+    uart_send_hex((unsigned int)bootloader_main);
     uart_sendline("\r\n");
 
     uart_sendline("Kernel size : ");
@@ -29,9 +25,9 @@ void bootloader_main(void)
     uart_send_hex(kernel_size);
     uart_sendline("\r\n");
 
-    // for (int i = 0; i < kernel_size; i++) {
-    //     *kernel++ = uart_recv();
-    // }
+    for (int i = 0; i < kernel_size; i++) {
+        *kernel++;
+    }
 
     uart_sendline("\r\n");
     uart_sendline("Kernel loaded at 0x80000.\r\n");

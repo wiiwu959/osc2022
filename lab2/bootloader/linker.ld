@@ -1,8 +1,10 @@
-_kernel = 0x80000;
+_bootloader = 0x60000;
+_kernel     = 0x80000;
+_initramfs  = 0x20000000;
 
 SECTIONS
 {
-  . = 0x60000;
+  . = _bootloader;
   
   .text.boot : { *(.text.boot) }
 

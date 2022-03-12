@@ -1,6 +1,6 @@
 CROSS_COMPILE ?= aarch64-linux-gnu-
 
-CFLAGS   = -Wall -nostdlib -nostartfiles -ffreestanding -Iinclude -mgeneral-regs-only
+CFLAGS   = -Wall -nostdlib -nostartfiles -ffreestanding -Iinclude -mcpu=cortex-a53+nofp+nosimd -mgeneral-regs-only -O0
 ASMOPS = -Iinclude 
 
 BUILD_DIR = build
@@ -47,7 +47,7 @@ kernel8.img: $(KERNEL_DIR)/linker.ld $(KERNEL_OBJ_FILES) $(OBJ_FILES)
 	$(CROSS_COMPILE)objcopy $(BUILD_DIR)/kernel8.elf -O binary kernel8.img
 
 run: kernel8.img
-	qemu-system-aarch64 -M raspi3 -kernel kernel8.img -display none -serial null -serial stdio
+	qemu-system-aarch64 -M raspi3 -kernel kernel8.img -display none -serial null -serial stdio -initrd initramfs.cpio
 
 # for building bootloader
 $(BUILD_DIR)/$(BOOTLOADER_DIR)/%_c.o: $(BOOTLOADER_DIR)/%.c

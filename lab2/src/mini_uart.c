@@ -69,6 +69,14 @@ void uart_sendline(char* str)
     }
 }
 
+void uart_sendn(char *str, int len)
+{
+    for (int i = 0; i < len; i++) {
+        uart_send(*str);
+        str++;
+    }
+}
+
 void uart_send_hex(unsigned int num)
 {
     uart_sendline("0x");
