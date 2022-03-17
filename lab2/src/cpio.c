@@ -1,6 +1,7 @@
 #include <cpio.h>
 #include <mini_uart.h>
 #include <string.h>
+#include <stdint.h>
 
 unsigned int cpio_read_8hex(char* num)
 {
@@ -26,14 +27,14 @@ int cpio_align(int num, int base)
     return 0;
 }
 
-void cpio_list()
+void cpio_list(uint64_t initramfs_loc)
 {
-    struct cpio_newc_header *ramfs = (struct cpio_newc_header *)CPIO_LOC;
-    char* ptr = (char*)ramfs;
+    struct cpio_newc_header *ramfs = (struct cpio_newc_header *)initramfs_loc;
+    char* ptr = (char*)initramfs_loc;
     while (1) {
         ramfs = (struct cpio_newc_header *)ptr;
         if (strncmp("070701", ramfs->c_magic, 6)) {
-            uart_sendline("[*] Not new ASCII format cpio archive.");
+            uart_send_string("[*] Not new ASCII format cpio archive.");
             break;
         }
         
@@ -50,19 +51,19 @@ void cpio_list()
 
         ptr += namesize + name_align + filesize + file_align;
 
-        uart_sendline(filename);
-        uart_sendline("\r\n");
+        uart_send_string(filename);
+        uart_send_string("\r\n");
     }
 }
 
-void cpio_cat(char* catfile)
+void cpio_cat(char* catfile, uint64_t initramfs_loc)
 {
-    struct cpio_newc_header *ramfs = (struct cpio_newc_header *)CPIO_LOC;
+    struct cpio_newc_header *ramfs = (struct cpio_newc_header *)initramfs_loc;
     char* ptr = (char*)ramfs;
     while (1) {
         ramfs = (struct cpio_newc_header *)ptr;
         if (strncmp("070701", ramfs->c_magic, 6)) {
-            uart_sendline("[*] Not new ASCII format cpio archive.");
+            uart_send_string("[*] Not new ASCII format cpio archive.");
             break;
         }
         
@@ -78,7 +79,7 @@ void cpio_cat(char* catfile)
         } else if (!strcmp(catfile, filename)) {
             ptr += namesize + name_align;
             uart_sendn(ptr, filesize);
-            uart_sendline("\r\n");
+            uart_send_string("\r\n");
             break;
         }
         ptr += namesize + name_align + filesize + file_align;

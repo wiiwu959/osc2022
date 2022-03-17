@@ -53,7 +53,7 @@ void uart_send(char c)
     put(AUX_MU_IO_REG, c);
 }
 
-void uart_sendline(char* str)
+void uart_send_string(char* str)
 {
     while (*str != '\0') {
         uart_send(*str);
@@ -63,7 +63,7 @@ void uart_sendline(char* str)
 
 void uart_send_hex(unsigned int num)
 {
-    uart_sendline("0x");
+    uart_send_string("0x");
     for (int i = 28; i >= 0; i -= 4) {
         char b = (char)(0xF & (num >> i));
         if ((int)b < 10) {

@@ -3,8 +3,8 @@
 
 #include <stddef.h>
 
-#define MEM_HEAD 0x9000000
-#define MEM_TAIL 0x9ffffff
+#define MEM_HEAD (char*)0x9000000
+#define MEM_TAIL (char*)0x9ffffff
 
 void* simple_malloc(size_t size);
 

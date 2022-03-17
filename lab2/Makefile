@@ -1,6 +1,6 @@
 CROSS_COMPILE ?= aarch64-linux-gnu-
 
-CFLAGS   = -Wall -nostdlib -nostartfiles -ffreestanding -Iinclude -mcpu=cortex-a53+nofp+nosimd -mgeneral-regs-only -O0
+CFLAGS   = -Wall -nostdlib -nostartfiles -ffreestanding -Iinclude -mcpu=cortex-a53+nofp+nosimd -mgeneral-regs-only -O0 -g
 ASMOPS = -Iinclude 
 
 BUILD_DIR = build
@@ -49,6 +49,9 @@ kernel8.img: $(KERNEL_DIR)/linker.ld $(KERNEL_OBJ_FILES) $(OBJ_FILES)
 run: kernel8.img
 	qemu-system-aarch64 -M raspi3 -kernel kernel8.img -display none -serial null -serial stdio -initrd ./config/initramfs.cpio -dtb ./config/bcm2710-rpi-3-b-plus.dtb
 
+debug: kernel8.img
+	qemu-system-aarch64 -M raspi3 -kernel kernel8.img -display none -serial null -serial stdio -initrd ./config/initramfs.cpio -dtb ./config/bcm2710-rpi-3-b-plus.dtb  -s -S
+
 # for building bootloader
 $(BUILD_DIR)/$(BOOTLOADER_DIR)/%_c.o: $(BOOTLOADER_DIR)/%.c
 	mkdir -p $(@D)
@@ -65,6 +68,9 @@ BOOTLOADER_OBJ_FILES += $(BOOTLOADER_ASM_FILES:$(BOOTLOADER_DIR)/%.S=$(BUILD_DIR
 bootloader.img: $(BOOTLOADER_DIR)/linker.ld $(BOOTLOADER_OBJ_FILES) $(OBJ_FILES)
 	$(CROSS_COMPILE)ld -T $(BOOTLOADER_DIR)/linker.ld -o $(BUILD_DIR)/bootloader.elf $(OBJ_FILES) $(BOOTLOADER_OBJ_FILES)
 	$(CROSS_COMPILE)objcopy $(BUILD_DIR)/bootloader.elf -O binary bootloader.img
+
+load_d: bootloader.img
+	qemu-system-aarch64 -M raspi3 -kernel bootloader.img -display none -serial null -serial stdio -s -S
 
 load: bootloader.img
 	qemu-system-aarch64 -M raspi3 -kernel bootloader.img -display none -serial null -serial stdio

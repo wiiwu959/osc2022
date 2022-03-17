@@ -6,12 +6,16 @@ kernel_raw = kernel_file.read()
 kernel_size = len(kernel_raw)
 
 with open('/dev/ttyUSB0', "wb", buffering = 0) as tty:
+    print("sending kernel_size...")
+    print(hex(kernel_size))
     sending = struct.pack("<I", kernel_size)
     tty.write(sending)
     tty.flush()
 
-    # time.sleep(1)
+    print("sending kernel...")
+
+    time.sleep(1)
     
-    # for i in kernel_raw:
-    # tty.write(kernel_raw)
-    # tty.flush()
+    for c in kernel_raw:
+        tty.write(bytes([c]))
+        tty.flush()

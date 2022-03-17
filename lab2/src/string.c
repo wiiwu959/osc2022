@@ -53,3 +53,13 @@ int strncmp(char *s1, char *s2, size_t n)
     }
     return c1 - c2;
 }
+
+int strlen(char* str)
+{
+    int len = 0;
+    while (*str != '\0') {
+        len++;
+        str++;
+    }
+    return len;
+}

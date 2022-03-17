@@ -1,8 +1,9 @@
 .section ".text.boot"
 .global _start
 _start: 
+    mov x19, x0
     ldr x10, =_bootloader
-    ldr x11, =_estack
+    ldr x11, =_ebss
     sub x11, x11, x10              // x11 = bootloader_size
     
     adr x12, _start                // x12 = real start location (0x80000)
@@ -10,7 +11,7 @@ _start:
 
 relocate:
     cmp x12, x11
-    bgt relocate_finish
+    b.gt relocate_finish
 
     ldr x15, [x12]
     str x15, [x10]
@@ -24,7 +25,7 @@ relocate_finish:
     adr x12, _start
     sub x11, x11, x12              // x11 = offset from _start to _handle_cpu
     add x10, x10, x11
-    be  x10                        // jump to relocattion address and from _handle_cpu
+    br  x10                        // jump to relocattion address and from _handle_cpu
 
 _handle_cpu:
     mrs x10, mpidr_el1
@@ -38,10 +39,11 @@ _handle_cpu:
 memzero:
     str xzr, [x10], #8             // *x10 = 0 then x10 = x10 + 8
     subs x11, x11, #8              // x11 = x11 - 8
-    bgt memzero                    // compare cpsr register
+    b.gt memzero                    // compare cpsr register
 
     ldr x10, =_estack              // place stack pointer
     mov sp, x10 
+    mov x0, x19
     bl  bootloader_main
 
 proc_hang: 

@@ -4,59 +4,61 @@
 #include <string.h>
 #include <cpio.h>
 #include <allocator.h>
+#include <fdt.h>
 
-char buf[0x200];
+uint64_t initramfs_loc;
+static char buf[0x200];
 
 void cmd_help(void)
 {
-    uart_sendline("help     :print this help menu\r\n");
-    uart_sendline("hello    :print Hello World!\r\n");
-    uart_sendline("reboot   :reboot the device\r\n");
-    uart_sendline("hardware :get hardware's info\r\n");
-    uart_sendline("ls       :list files\r\n");
-    uart_sendline("cat      :capture file content\r\n");
-    uart_sendline("alloc    :testing simple_malloc\r\n");
+    uart_send_string("help     :print this help menu\r\n");
+    uart_send_string("hello    :print Hello World!\r\n");
+    uart_send_string("reboot   :reboot the device\r\n");
+    uart_send_string("hardware :get hardware's info\r\n");
+    uart_send_string("ls       :list files\r\n");
+    uart_send_string("cat      :capture file content\r\n");
+    uart_send_string("malloc   :testing simple_malloc\r\n");
 }
 
 void cmd_hello(void)
 {
-    uart_sendline("Hello World!\r\n");
+    uart_send_string("Hello World!\r\n");
 }
 
 void cmd_reboot(void)
 {
-    uart_sendline("Rebooting...\r\n");
+    uart_send_string("Rebooting...\r\n");
     uart_reset(5);
 }
 
 void cmd_hardware(void)
 {
-    uart_sendline("board revision: ");
+    uart_send_string("board revision: ");
     unsigned int revision = get_board_revision();
     uart_send_hex(revision);
-    uart_sendline("\r\n");
+    uart_send_string("\r\n");
 
     struct arm_memory mem_info = get_arm_memory();
-    uart_sendline("ARM memory:\r\n");
-    uart_sendline("  base address: ");
+    uart_send_string("ARM memory:\r\n");
+    uart_send_string("  base address: ");
     uart_send_hex(mem_info.base_addr);
-    uart_sendline("\r\n");
-    uart_sendline("  size        : ");
+    uart_send_string("\r\n");
+    uart_send_string("  size        : ");
     uart_send_hex(mem_info.size);
-    uart_sendline("\r\n");
+    uart_send_string("\r\n");
 }
 
 void cmd_ls()
 {
-    cpio_list();
+    cpio_list(initramfs_loc);
 }
 
 void cmd_cat()
 {
-    uart_sendline("Filename: ");
+    uart_send_string("Filename: ");
     uart_recvline(buf);
-    uart_sendline("\r\n");
-    cpio_cat(buf);
+    uart_send_string("\r\n");
+    cpio_cat(buf, initramfs_loc);
 }
 
 void cmd_malloc()
@@ -70,12 +72,12 @@ void cmd_malloc()
     meow[3] = 'w';
     meow[4] = '?';
     
-    uart_sendline("Address of meow[5] : ");
+    uart_send_string("Address of meow[5] : ");
     uart_send_hex((unsigned int)&meow[5]);
-    uart_sendline("\r\n");
-    uart_sendline("Address of cover   : ");
+    uart_send_string("\r\n");
+    uart_send_string("Address of cover   : ");
     uart_send_hex((unsigned int)cover);
-    uart_sendline("\r\n");
+    uart_send_string("\r\n");
     
     meow[5] = 'k';
     meow[6] = 'i';
@@ -84,25 +86,25 @@ void cmd_malloc()
     meow[9] = 'y';
     meow[10] = '\0';
     
-    uart_sendline(meow);
-    uart_sendline("\r\n");
-    uart_sendline(cover);
-    uart_sendline("\r\n");
+    uart_send_string(meow);
+    uart_send_string("\r\n");
+    uart_send_string(cover);
+    uart_send_string("\r\n");
 }
 
 void cmd_hint()
 {
-    uart_sendline("Command not found\r\n");
-    uart_sendline("Use \"help\" to see help \r\n");
+    uart_send_string("Command not found\r\n");
+    uart_send_string("Use \"help\" to see help \r\n");
 }
 
 
 void shell(void)
 {
-    while (1) {
-        uart_sendline("# ");
+    while (1) {        
+        uart_send_string("# ");
         uart_recvline(buf);
-        uart_sendline("\r\n");
+        uart_send_string("\r\n");
 
         if (!strcmp("help", buf)) {
             cmd_help();
@@ -124,9 +126,42 @@ void shell(void)
     }
 }
 
-void main(void)
+void initramfs_callback(char* fdt, char* node) 
+{
+    char* cur = node;
+    cur += fdt_alignup(strlen(node) + 1, 4);
+    char* dt_string = fdt_get_dt_string(fdt);
+
+    while (fdt_get_uint32(cur) == FDT_PROP) {
+        cur += 4;
+        struct fdt_prop* prop = (struct fdt_prop*)cur;
+        uint32_t prop_len = fdt_get_uint32((char*)&prop->len);
+        char* prop_name = dt_string + fdt_get_uint32((char*)&prop->nameoff);
+
+        cur += sizeof(struct fdt_prop);
+        if(!strcmp(prop_name, "linux,initrd-start")) {
+            uart_send_string("[*] cpio archive file loaded at: ");
+            initramfs_loc = fdt_get_uint32(cur);
+            uart_send_hex(initramfs_loc);
+            uart_send_string("\r\n");
+        }
+        cur += fdt_alignup(prop_len, 4);
+    }
+    return;
+}
+
+void initramfs_init(char* fdt)
+{
+    initramfs_loc = 0;
+    fdt_traverse(fdt, initramfs_callback);
+}
+
+void main(char* fdt)
 {
     uart_init();
-    uart_sendline("Hello! Type command to start.\r\n");
+    uart_send_hex(fdt);
+
+    initramfs_init(fdt);
+    uart_send_string("Hello! Type command to start.\r\n");
     shell();
 }

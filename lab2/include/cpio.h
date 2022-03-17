@@ -1,8 +1,7 @@
 #ifndef _CPIO_H
 #define _CPIO_H
 
-#define CPIO_LOC 0x8000000
-// #define CPIO_LOC 0x20000000
+#include <stdint.h>
 
 // https://www.freebsd.org/cgi/man.cgi?query=cpio&sektion=5
 struct cpio_newc_header {
@@ -24,7 +23,7 @@ struct cpio_newc_header {
 
 unsigned int cpio_read_8hex(char* num);
 int cpio_align(int num, int base);
-void cpio_list(void);
-void cpio_cat(char* catfile);
+void cpio_list(uint64_t initramfs_loc);
+void cpio_cat(char* catfile, uint64_t initramfs_loc);
 
 #endif  /*_CPIO_H */
