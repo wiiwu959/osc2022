@@ -159,7 +159,6 @@ void initramfs_init(char* fdt)
 void main(char* fdt)
 {
     uart_init();
-    uart_send_hex(fdt);
 
     initramfs_init(fdt);
     uart_send_string("Hello! Type command to start.\r\n");
