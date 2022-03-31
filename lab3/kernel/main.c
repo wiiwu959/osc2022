@@ -1,6 +1,7 @@
 #include <mini_uart.h>
 #include <timer.h>
 #include <shell.h>
+#include <exception.h>
 
 void main(char* fdt)
 {
@@ -9,7 +10,7 @@ void main(char* fdt)
 
     enable_interrupt();
     timer_init();
-    
+
     uart_send_string("Hello! Type command to start.\r\n");
     shell();
 }

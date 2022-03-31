@@ -151,7 +151,6 @@ void cmd_settimeout(char* buffer)
     add_timer(print_msg, sec, arg[2]);
 }
 
-
 void cmd_hint()
 {
     uart_send_string("Command not found\r\n");
@@ -215,8 +214,7 @@ void shell(void)
             cmd_async();
         } else if (!strncmp("set", buf, 3)) {
             cmd_settimeout(buf);
-        }
-        else {
+        } else {
             cmd_hint();
         }
     }

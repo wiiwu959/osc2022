@@ -172,3 +172,17 @@ void uart_async_send(char c)
     selector |= 0x2;
     put(AUX_MU_IER_REG, selector);
 }
+
+void uart_async_send_string(char *str)
+{
+    while (*str != '\0') {
+        write_buf[write_buf_head++] = *str++;
+        if (write_buf_head == BUFFER_MAX_SIZE) {
+            write_buf_head = 0;
+        }
+    }
+    unsigned int selector;
+    selector = get(AUX_MU_IER_REG);
+    selector |= 0x2;
+    put(AUX_MU_IER_REG, selector);
+}

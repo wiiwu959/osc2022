@@ -111,7 +111,7 @@ void cpio_exec(char* getfile, uint64_t initramfs_loc)
             break;
         } else if (!strcmp(getfile, filename)) {
             ptr += namesize + name_align;
-            char* load_addr = 0x1000000;
+            char* load_addr = (char*)0x1000000;
 
             char* content = ptr;
             char* loading = load_addr;

@@ -1,7 +1,7 @@
 #ifndef _TIMER_H
 #define _TIMER_H
 
-#define CORE0_TIMER_IRQ_CTRL ((unsigned int *)(0x40000040))
+#define CORE0_TIMER_IRQ_CTRL 0x40000040
 
 // time_event
 typedef struct _time_event

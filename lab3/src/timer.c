@@ -17,7 +17,6 @@ void core_timer_enable()
     asm volatile("mrs %0, cntfrq_el0" : "=r" (frq));
     asm volatile("msr cntp_tval_el0, %0" :: "r" (frq * 2));
     put(CORE0_TIMER_IRQ_CTRL, 2);
-    // *CORE0_TIMER_IRQ_CTRL = 2;
 }
 
 void core_timer_disable()
