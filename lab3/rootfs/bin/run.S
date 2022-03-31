@@ -8,4 +8,4 @@ _start:
     cmp x0, 5
     blt 1b
 1:
-    b 1b
+    bl 1b

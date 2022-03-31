@@ -65,6 +65,5 @@ void disable_uart_interrupt(void);
 void uart_handler();
 char uart_async_recv();
 void uart_async_send(char c);
-void uart_async_send_string(char *str);
 
 #endif  /*_MINI_UART_H */

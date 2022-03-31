@@ -10,6 +10,7 @@ void cmd_cat(void);
 void cmd_load(void);
 void cmd_malloc(void);
 void cmd_async(void);
+void cmd_settimeout(char* buffer);
 void cmd_hint(void);
 
 void initramfs_callback(char* fdt, char* node);

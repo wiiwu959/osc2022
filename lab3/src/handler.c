@@ -5,14 +5,13 @@
 
 void exception_entry(unsigned long spsr, unsigned long elr, unsigned long esr) 
 {
-    printf("spsr_el1\t%x\n", spsr);
-    printf("elr_el1\t\t%x\n", elr);
-    printf("esr_el1\t\t%x\n\n", esr);
+    printf("spsr_el1\t%x\r\n", spsr);
+    printf("elr_el1\t\t%x\r\n", elr);
+    printf("esr_el1\t\t%x\r\n\n", esr);
 
     return;
 }
 
-// timer
 void lower_el_one_irq_handler()
 {
     core_timer_handler();
@@ -20,8 +19,10 @@ void lower_el_one_irq_handler()
 }
 
 void current_sp_elx_irq_handler()
-{    
-    if (!(get(AUX_MU_IIR_REG) & 1)) {
+{   
+    if (get(CORE0_IRQ_SRC) & 0b10) {
+        each_timer_handler();
+    } else if (!(get(AUX_MU_IIR_REG) & 1)) {
         uart_handler();
     }
 }

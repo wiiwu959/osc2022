@@ -6,21 +6,24 @@
 #include <string.h>
 #include <allocator.h>
 #include <fdt.h>
+#include <timer.h>
+#include <printf.h>
 
 uint64_t initramfs_loc;
 static char buf[0x200];
 
 void cmd_help(void)
 {
-    uart_send_string("help     :print this help menu\r\n");
-    uart_send_string("hello    :print Hello World!\r\n");
-    uart_send_string("reboot   :reboot the device\r\n");
-    uart_send_string("hardware :get hardware's info\r\n");
-    uart_send_string("ls       :list files\r\n");
-    uart_send_string("cat      :capture file content\r\n");
-    uart_send_string("load     :load a executable file\r\n");
-    uart_send_string("malloc   :testing simple_malloc\r\n");
-    uart_send_string("async    :testing uart_async\r\n");
+    uart_send_string("help            :print this help menu\r\n");
+    uart_send_string("hello           :print Hello World!\r\n");
+    uart_send_string("reboot          :reboot the device\r\n");
+    uart_send_string("hardware        :get hardware's info\r\n");
+    uart_send_string("ls              :list files\r\n");
+    uart_send_string("cat             :capture file content\r\n");
+    uart_send_string("load            :load a executable file\r\n");
+    uart_send_string("malloc          :testing simple_malloc\r\n");
+    uart_send_string("set <sec> <msg> :set a timer and print msg\r\n");
+    uart_send_string("async           :testing uart_async\r\n");
 }
 
 void cmd_hello(void)
@@ -69,7 +72,6 @@ void cmd_load()
     uart_send_string("Filename: ");
     uart_recvline(buf);
     uart_send_string("\r\n");
-    core_timer_enable();
     cpio_exec(buf, initramfs_loc);
 }
 
@@ -106,23 +108,49 @@ void cmd_malloc()
 
 void cmd_async()
 {
-    enable_interrupt();
+    // enable_interrupt();
     enable_uart_interrupt();
 
-    char buf[BUFFER_MAX_SIZE];
+    char buffer[BUFFER_MAX_SIZE];
     int i = 0;
     char c = uart_async_recv();
     while (c != '\n') {
-        buf[i] = c;
+        buffer[i] = c;
         c = uart_async_recv();
         i++;
     }
-    buf[i + 1] = '\0';
-    uart_async_send_string(buf);
+    buffer[i + 1] = '\0';
+    uart_async_send_string(buffer);
+    uart_async_send_string("\r\n");
 
     disable_uart_interrupt();
-    disable_interrupt();
+    // disable_interrupt();
 }
+
+void print_msg(char* msg)
+{
+    uart_send_string("[*] message: ");
+    uart_send_string(msg);
+    uart_send_string("\r\n");
+}
+
+void cmd_settimeout(char* buffer)
+{
+    int arg_num = 0;
+    char* arg[BUFFER_MAX_SIZE];
+    arg[arg_num] = buffer;
+    while (*buffer) {
+        if (*buffer == ' ') {
+            *buffer = '\0';
+            arg[++arg_num] = buffer + 1;
+        }
+        buffer++;
+    }
+
+    int sec = atoi(arg[1]);
+    add_timer(print_msg, sec, arg[2]);
+}
+
 
 void cmd_hint()
 {
@@ -185,7 +213,10 @@ void shell(void)
             cmd_malloc();
         } else if (!strcmp("async", buf)) {
             cmd_async();
-        } else {
+        } else if (!strncmp("set", buf, 3)) {
+            cmd_settimeout(buf);
+        }
+        else {
             cmd_hint();
         }
     }

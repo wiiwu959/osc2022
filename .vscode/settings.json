@@ -2,6 +2,7 @@
     "files.associations": {
         "stdint.h": "c",
         "string.h": "c",
-        "timer.h": "c"
+        "timer.h": "c",
+        "type_traits": "c"
     }
 }

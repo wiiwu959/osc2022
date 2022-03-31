@@ -63,3 +63,13 @@ int strlen(char* str)
     }
     return len;
 }
+
+int atoi(char* str)
+{
+    int value = 0;
+    while (*str != '\0') {
+        value = value * 10 + (*str - '0');
+        str++;
+    }
+    return value;
+}
