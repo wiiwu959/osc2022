@@ -123,6 +123,8 @@ void disable_uart_interrupt()
 
 void uart_handler()
 {
+    // uart_send_string("uart\r\n");
+
     disable_uart_interrupt();
     unsigned int iir = get(AUX_MU_IIR_REG);
     // write

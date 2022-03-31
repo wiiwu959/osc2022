@@ -23,6 +23,7 @@ void cmd_help(void)
     uart_send_string("load            :load a executable file\r\n");
     uart_send_string("malloc          :testing simple_malloc\r\n");
     uart_send_string("set <sec> <msg> :set a timer and print msg\r\n");
+    uart_send_string("timer           :set 10 timers\r\n");
     uart_send_string("async           :testing uart_async\r\n");
 }
 
@@ -151,6 +152,20 @@ void cmd_settimeout(char* buffer)
     add_timer(print_msg, sec, arg[2]);
 }
 
+void cmd_timer()
+{
+    add_timer(print_msg, 1, "timer 1");
+    add_timer(print_msg, 2, "timer 2");
+    add_timer(print_msg, 3, "timer 3");
+    add_timer(print_msg, 4, "timer 4");
+    add_timer(print_msg, 5, "timer 5");
+    add_timer(print_msg, 6, "timer 6");
+    add_timer(print_msg, 7, "timer 7");
+    add_timer(print_msg, 8, "timer 8");
+    add_timer(print_msg, 9, "timer 9");
+    add_timer(print_msg, 10, "timer 10");
+}
+
 void cmd_hint()
 {
     uart_send_string("Command not found\r\n");
@@ -214,6 +229,8 @@ void shell(void)
             cmd_async();
         } else if (!strncmp("set", buf, 3)) {
             cmd_settimeout(buf);
+        } else if (!strcmp("timer", buf)) {
+            cmd_timer();
         } else {
             cmd_hint();
         }
