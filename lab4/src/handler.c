@@ -54,9 +54,9 @@ void add_task(void (*callback)(void), int priority)
 }
 void exception_entry(unsigned long spsr, unsigned long elr, unsigned long esr) 
 {
-    printf("spsr_el1\t%x\r\n", spsr);
-    printf("elr_el1\t\t%x\r\n", elr);
-    printf("esr_el1\t\t%x\r\n\n", esr);
+    // printf("spsr_el1\t%x\r\n", spsr);
+    // printf("elr_el1\t\t%x\r\n", elr);
+    // printf("esr_el1\t\t%x\r\n\n", esr);
 
     return;
 }

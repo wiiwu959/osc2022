@@ -13,7 +13,8 @@ void main(char* fdt)
     timer_init();
 
     page_init();
-    page_test();
+    // page_test();
+    mem_test();
     
     uart_send_string("Hello! Type command to start.\r\n");
     shell();
