@@ -13,6 +13,16 @@ uint32_t fdt_get_uint32(char* ptr)
     return result;
 }
 
+uint64_t fdt_get_uint64(char *ptr)
+{
+    uint64_t result = 0;
+    for (int i = 0; i < 8; i++) {
+        result <<= 8;
+        result += ptr[i];
+    }
+    return result;
+}
+
 char* fdt_get_dt_string(char* fdt)
 {
     struct fdt_header* header = (struct fdt_header*)fdt;
@@ -33,9 +43,11 @@ int fdt_alignup(int num, int base)
     return num;
 }
 
-void fdt_traverse(char* fdt, void (*callback)(char*, char*))
+int fdt_traverse(char* fdt, void (*callback)(char*, char*))
 {
     struct fdt_header* header = (struct fdt_header*)fdt;
+    uint64_t fdt_end = (uint64_t)fdt + fdt_get_uint32((char*)&header->totalsize);
+
     if (fdt_get_uint32((char*)&header->magic) != 0xd00dfeed) {
         uart_send_string("\r\n");
         uart_send_hex(fdt_get_uint32((char*)&header->magic));
@@ -48,12 +60,7 @@ void fdt_traverse(char* fdt, void (*callback)(char*, char*))
         uint32_t fdt_token = fdt_get_uint32(cur);
         cur += 4;
         if (fdt_token == FDT_BEGIN_NODE) {
-            
-            if (!strcmp(cur, "chosen")) {
-                callback(fdt, cur);
-                break;
-            }
-
+            callback(fdt, cur);
             cur += fdt_alignup(strlen(cur) + 1, 4);
             layer++;
         } else if (fdt_token == FDT_END_NODE) {
@@ -75,6 +82,7 @@ void fdt_traverse(char* fdt, void (*callback)(char*, char*))
             break;
         }
     }
+    return fdt_end;
 }
 
 void fdt_list(char* fdt)

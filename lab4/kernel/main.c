@@ -7,14 +7,11 @@
 void main(char* fdt)
 {
     uart_init();
-    initramfs_init(fdt);
 
     enable_interrupt();
     timer_init();
 
-    page_init();
-    // page_test();
-    mem_test();
+    mm_init(fdt);
     
     uart_send_string("Hello! Type command to start.\r\n");
     shell();

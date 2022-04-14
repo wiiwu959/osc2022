@@ -29,13 +29,14 @@ void exec_task()
         disable_interrupt();
         task_list_head->callback();
         enable_interrupt();
+        kfree(task_list_head);
         task_list_head = task_list_head->next;
     }
 }
 
 void add_task(void (*callback)(void), int priority)
 {
-    task* add = simple_malloc(sizeof(task));
+    task* add = kmalloc(sizeof(task));
     add->callback = callback;
     add->priority = priority;
     add->status = WAITING;
@@ -54,9 +55,9 @@ void add_task(void (*callback)(void), int priority)
 }
 void exception_entry(unsigned long spsr, unsigned long elr, unsigned long esr) 
 {
-    // printf("spsr_el1\t%x\r\n", spsr);
-    // printf("elr_el1\t\t%x\r\n", elr);
-    // printf("esr_el1\t\t%x\r\n\n", esr);
+    printf("spsr_el1\t%x\r\n", spsr);
+    printf("elr_el1\t\t%x\r\n", elr);
+    printf("esr_el1\t\t%x\r\n\n", esr);
 
     return;
 }

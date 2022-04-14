@@ -1,15 +1,19 @@
 #include <allocator.h>
+
 #include <stddef.h>
+#include <stdint.h>
+
 #include <list.h>
 #include <printf.h>
 #include <mini_uart.h>
+#include <cpio.h>
 
-#define DEBUG
+// #define DEBUG
 
 char* malloc_ptr = MEM_HEAD;
 
 struct list_head frame_freelist[PAGE_MAX_FREE];
-page_head frame_array[PAGE_TOTAL];
+page_head* frame_array;
 
 int chunk_size[CHUNK_MAX_FREE] = {0x10, 0x20, 0x40, 0x80, 0x100, 0x200, 0x400, 0x800};
 struct list_head chunk_freelist[CHUNK_MAX_FREE];
@@ -26,12 +30,49 @@ void* simple_malloc(size_t size)
     return ptr;
 }
 
-int addr2index(void* ptr) {
-    return ((char*)(ptr) - (char*)PAGE_BASE) / PAGE_SIZE;
+void memory_reserve(void* from, void* to)
+{
+    from = (void*)((intptr_t)from & ~(PAGE_SIZE - 1));
+    to = (void*)(((intptr_t)to + page_base - 1) & ~(page_base - 1));
+    for (intptr_t i = (intptr_t)from; i < (intptr_t)to; i += PAGE_SIZE)
+    {
+        int index = addr2index((void*)i);
+        frame_array[index].status = ALLOCATED;
+        frame_array[index].val = 0; // 2^0 = 1 (1 page)
+    }
 }
 
-void* index2addr(int num) {
-    return (void*)(PAGE_BASE + num * PAGE_SIZE);
+void mm_init(char* fdt)
+{
+    initramfs_init(fdt);
+    page_base = (uint64_t)0;
+    page_end = (uint64_t)0x3c000000;
+
+    page_total = (page_end - page_base) / PAGE_SIZE;
+    frame_array = simple_malloc(sizeof(page_head) * page_total);
+
+    for (int i = 0; i < page_total; i++) {
+        frame_array[i].val = 0;
+        frame_array[i].status = FREE_PAGE;
+    }
+
+    //Spin tables for multicore boot
+    memory_reserve((void*)0, (void*)0x1000); 
+    
+    // Kernel image in the physical memory
+    memory_reserve((void*)0x80000, (void*)0x400000); 
+
+    // Initramfs
+    memory_reserve((uintptr_t)initramfs_loc, (uintptr_t)initramfs_end);
+
+    // Devicetree
+    memory_reserve((uintptr_t)fdt, fdt_end);
+
+    // simple simple_allocator
+    memory_reserve((uintptr_t)MEM_HEAD, (uintptr_t)MEM_TAIL);
+    
+    page_init();
+    chunk_init();
 }
 
 void page_init()
@@ -41,15 +82,33 @@ void page_init()
         INIT_LIST_HEAD(&frame_freelist[i]);
     }
 
-    int max_size = 1 << PAGE_MAX_FREE;
-    for (int i = 0; i < PAGE_TOTAL; i += max_size) {
-        struct list_head * added;
-        frame_array[i].val = PAGE_MAX_FREE - 1;
-        frame_array[i].status = FREE_PAGE;
-        added = (struct list_head *)index2addr(i);
-        list_add_tail(added, &frame_freelist[PAGE_MAX_FREE - 1]);
+    for (int exp = 0; exp < PAGE_MAX_FREE; exp++) {
+        int index = 0;
+        while (index < page_total) {
+            int buddy_index = index ^ (1 << exp);
+            if (buddy_index >= page_total) { break; }
+            if(frame_array[index].status == FREE_PAGE && frame_array[index].val == exp) {
+                if (frame_array[buddy_index].status == FREE_PAGE && frame_array[buddy_index].val == exp) {
+                    frame_array[index].val = exp + 1;
+                }
+            }
+            index += (1 << (exp + 1));
+        }
     }
-    chunk_init();
+
+    // page free_list manage
+    int index = 0;
+    while (index < page_total) {
+        if (frame_array[index].status == FREE_PAGE) {
+            int exp = frame_array[index].val;
+            struct list_head * added;
+            added = (struct list_head *)index2addr(index);
+            list_add_tail(added, &frame_freelist[exp]);
+            index += 1 << exp;
+        } else {
+            index++;
+        }
+    }
 }
 
 void *alloc_page(int num)
@@ -62,7 +121,7 @@ void *alloc_page(int num)
             list_del(cur);
 
             for (int i = available; i > target_exp; i--) {
-                struct list_head* add = (char*)cur + (PAGE_SIZE * (1 << (i - 1)));
+                struct list_head* add = (struct list_head*)((char*)cur + (PAGE_SIZE * (1 << (i - 1))));
                 list_add(add, &frame_freelist[i - 1]);
                 frame_array[addr2index(add)].val = i - 1;
                 frame_array[addr2index(add)].status = FREE_PAGE;
@@ -75,11 +134,14 @@ void *alloc_page(int num)
             frame_array[index].val = target_exp;
             frame_array[index].status = ALLOCATED;
 #ifdef DEBUG
-            printf("[*] Allocate %d pages using exp %d. \n", num, target_exp);
+            printf("[*] Allocate %d pages using exp %d, index is = %d. \n", num, target_exp, index);
 #endif
             return cur;
         }
     }
+#ifdef DEBUG
+    printf("[*] Not allocating any page. \n");
+#endif
     return NULL;
 }
 
@@ -87,7 +149,7 @@ void free_page(struct list_head* target) {
     int index = addr2index(target);
 
 #ifdef DEBUG
-    printf("[*] index = %d. \n", index);
+    printf("[*] Free index = %d. \n", index);
 #endif
 
     if (frame_array[index].status == FREE_PAGE) {
@@ -121,15 +183,6 @@ void free_page(struct list_head* target) {
     frame_array[index].status = FREE_PAGE;
     frame_array[index].val = exp;
 }
-
-
-void page_test(void)
-{
-    char* ptr1 = alloc_page(1);
-    free_page(ptr1);
-}
-
-
 
 void chunk_init()
 {
@@ -180,14 +233,14 @@ void* kmalloc(int size)
         return alloc_page(1);
     } else {
         int page_num = size / 0x1000;
-        if (size & 0xFFF > 0) { page_num++; }
+        if ((size & 0xFFF) > 0) { page_num++; }
         return alloc_page(page_num);
     }
 }
 
 void kfree(void *ptr)
 {
-    int index = ((char*)((int)ptr & (~0xFFF)) - (char*)PAGE_BASE) / PAGE_SIZE;
+    int index = ((char*)((intptr_t)ptr & (~0xFFF)) - (char*)page_base) / PAGE_SIZE;
     if(frame_array[index].status == IS_CHUNK) {
         int chunk_index = frame_array[index].val;
         list_add_tail((struct list_head*)ptr, &chunk_freelist[chunk_index]);
@@ -196,7 +249,36 @@ void kfree(void *ptr)
     }
 }
 
+
+// tests
+void page_test(void)
+{
+    char* ptr1 = alloc_page(1);
+    char* ptr2 = alloc_page(2);
+    char* ptr3 = alloc_page(2);
+    char* ptr4 = alloc_page(1);
+    char* ptr5 = alloc_page(1);
+    free_page(ptr1);
+    free_page(ptr4);
+    char* ptr6 = alloc_page(2);
+    free_page(ptr2);
+    free_page(ptr3);
+    free_page(ptr5);
+    free_page(ptr6);
+}
+
 void mem_test() {
     char* ptr1 = kmalloc(0x800);
     kfree(ptr1);
+
+    char* ptr2 = kmalloc(0x10);
+    char* ptr3 = kmalloc(0x10);
+    char* ptr4 = kmalloc(0x500);
+    char* ptr5 = kmalloc(0x1000);
+    kfree(ptr4);
+    char* ptr6 = kmalloc(0x2000);
+    kfree(ptr2);
+    kfree(ptr3);
+    kfree(ptr5);
+    kfree(ptr6);
 }

@@ -13,9 +13,6 @@ void cmd_async(void);
 void cmd_settimeout(char* buffer);
 void cmd_hint(void);
 
-void initramfs_callback(char* fdt, char* node);
-void initramfs_init(char* fdt);
-
 void shell(void);
 
 #endif  /*_SHELL_H */

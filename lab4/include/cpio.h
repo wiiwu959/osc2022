@@ -21,6 +21,13 @@ struct cpio_newc_header {
     char c_check[8];
 };
 
+uint64_t initramfs_loc;
+uint64_t initramfs_end;
+uint64_t memory_end;
+uint64_t fdt_end;
+void initramfs_callback(char* fdt, char* node);
+void initramfs_init(char* fdt);
+
 unsigned int cpio_read_8hex(char* num);
 int cpio_align(int num, int base);
 void cpio_list(uint64_t initramfs_loc);

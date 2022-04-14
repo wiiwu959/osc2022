@@ -28,10 +28,11 @@ struct fdt_prop {
 };
 
 uint32_t fdt_get_uint32(char* ptr);
+uint64_t fdt_get_uint64(char *ptr);
 char* fdt_get_dt_string(char* fdt);
 char* fdt_get_dt_struct(char* fdt);
 int fdt_alignup(int num, int base);
-void fdt_traverse(char* fdt, void (*callback)(char*, char*));
+int fdt_traverse(char* fdt, void (*callback)(char*, char*));
 void fdt_list(char* fdt);
 
 
