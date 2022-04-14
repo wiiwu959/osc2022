@@ -33,9 +33,8 @@ void* simple_malloc(size_t size)
 void memory_reserve(void* from, void* to)
 {
     from = (void*)((intptr_t)from & ~(PAGE_SIZE - 1));
-    to = (void*)(((intptr_t)to + page_base - 1) & ~(page_base - 1));
-    for (intptr_t i = (intptr_t)from; i < (intptr_t)to; i += PAGE_SIZE)
-    {
+    to = (void*)(((intptr_t)to + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));
+    for (intptr_t i = (intptr_t)from; i < (intptr_t)to; i += PAGE_SIZE) {
         int index = addr2index((void*)i);
         frame_array[index].status = ALLOCATED;
         frame_array[index].val = 0; // 2^0 = 1 (1 page)
@@ -126,7 +125,7 @@ void *alloc_page(int num)
                 frame_array[addr2index(add)].val = i - 1;
                 frame_array[addr2index(add)].status = FREE_PAGE;
 #ifdef DEBUG
-                printf("[*] Split exp %d frame to exp %d frame. \n", i, i - 1);
+                printf("[*] Split exp %d frame to exp %d frame. \r\n", i, i - 1);
 #endif
             }
 
@@ -134,13 +133,13 @@ void *alloc_page(int num)
             frame_array[index].val = target_exp;
             frame_array[index].status = ALLOCATED;
 #ifdef DEBUG
-            printf("[*] Allocate %d pages using exp %d, index is = %d. \n", num, target_exp, index);
+            printf("[*] Allocate %d pages using exp %d, index is = %d. \r\n", num, target_exp, index);
 #endif
             return cur;
         }
     }
 #ifdef DEBUG
-    printf("[*] Not allocating any page. \n");
+    printf("[*] Not allocating any page. \r\n");
 #endif
     return NULL;
 }
@@ -149,11 +148,11 @@ void free_page(struct list_head* target) {
     int index = addr2index(target);
 
 #ifdef DEBUG
-    printf("[*] Free index = %d. \n", index);
+    printf("[*] Free index = %d. \r\n", index);
 #endif
 
     if (frame_array[index].status == FREE_PAGE) {
-        printf("[*] Double free. \n");
+        printf("[*] Double free. \r\n");
         return;
     }
 
@@ -168,7 +167,7 @@ void free_page(struct list_head* target) {
         list_del(buddy);
 
 #ifdef DEBUG
-        printf("[*] Merge index %d with %d, back to free list exp %d.\n", index, buddy_index, exp + 1);
+        printf("[*] Merge index %d with %d, back to free list exp %d. \r\n", index, buddy_index, exp + 1);
 #endif
         exp++;
         if (buddy_index < index) {
@@ -207,7 +206,7 @@ void* alloc_chunk(int size)
         void* new_page = alloc_page(1);
         int frame_index = addr2index(new_page);
         frame_array[frame_index].status = IS_CHUNK;
-        frame_array[frame_index].val = chunk_size[index];
+        frame_array[frame_index].val = index;
 
         int page_size = PAGE_SIZE;
         while (page_size - size >= 0) {
@@ -217,7 +216,7 @@ void* alloc_chunk(int size)
         }
     }
 #ifdef DEBUG
-    printf("[*] Allocate chunk size: %d\n", chunk_size[index]);
+    printf("[*] Allocate chunk size: %d \r\n", chunk_size[index]);
 #endif
     struct list_head* ptr = chunk_freelist[index].next;
     list_del(ptr);
@@ -243,6 +242,9 @@ void kfree(void *ptr)
     if(frame_array[index].status == IS_CHUNK) {
         int chunk_index = frame_array[index].val;
         list_add_tail((struct list_head*)ptr, &chunk_freelist[chunk_index]);
+#ifdef DEBUG
+        printf("Free chunk of size %d. \r\n", chunk_size[chunk_index]);
+#endif
     } else {
         free_page(ptr);
     }
@@ -264,6 +266,18 @@ void page_test(void)
     free_page(ptr3);
     free_page(ptr5);
     free_page(ptr6);
+
+    char* ptr7 = alloc_page(1);
+    char* ptr8 = alloc_page(1);
+    char* ptr9 = alloc_page(1);
+    char* ptr10 = alloc_page(1);
+    char* ptr11 = alloc_page(1);
+    free_page(ptr7);
+    free_page(ptr8);
+    free_page(ptr9);
+    free_page(ptr10);
+    free_page(ptr11);
+
 }
 
 void mem_test() {
@@ -273,11 +287,11 @@ void mem_test() {
     char* ptr2 = kmalloc(0x10);
     char* ptr3 = kmalloc(0x10);
     char* ptr4 = kmalloc(0x500);
-    // char* ptr5 = kmalloc(0x1000);
+    char* ptr5 = kmalloc(0x1000);
     kfree(ptr4);
-    // char* ptr6 = kmalloc(0x2000);
+    char* ptr6 = kmalloc(0x2000);
     kfree(ptr2);
     kfree(ptr3);
-    // kfree(ptr5);
-    // kfree(ptr6);
+    kfree(ptr5);
+    kfree(ptr6);
 }
