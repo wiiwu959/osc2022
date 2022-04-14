@@ -54,7 +54,7 @@ void each_timer_handler()
                     time_event_head->start_time, time_event_head->duration, time_event_head->expired_time);
             time_event_head->callback(time_event_head->msg);
             time_event_head = time_event_head->next;
-            kfree(time_event_head->prev);
+            // kfree(time_event_head->prev);
             time_event_head->prev = NULL;
             
         }
@@ -80,7 +80,8 @@ void timer_init()
 
 void add_timer(void (*callback)(char*), int sec, char* msg)
 {
-    time_event* add_event = kmalloc(sizeof(time_event));
+    // time_event* add_event = kmalloc(sizeof(time_event));
+    time_event* add_event = simple_malloc(sizeof(time_event));
     add_event->start_time = get_current_time();
     add_event->duration = sec;
     add_event->expired_time = add_event->start_time + sec;

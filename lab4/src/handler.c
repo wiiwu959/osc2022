@@ -29,14 +29,15 @@ void exec_task()
         disable_interrupt();
         task_list_head->callback();
         enable_interrupt();
-        kfree(task_list_head);
+        // kfree(task_list_head);
         task_list_head = task_list_head->next;
     }
 }
 
 void add_task(void (*callback)(void), int priority)
 {
-    task* add = kmalloc(sizeof(task));
+    // task* add = kmalloc(sizeof(task));
+    task* add = simple_malloc(sizeof(task));
     add->callback = callback;
     add->priority = priority;
     add->status = WAITING;

@@ -8,7 +8,7 @@
 #include <mini_uart.h>
 #include <cpio.h>
 
-// #define DEBUG
+#define DEBUG
 
 char* malloc_ptr = MEM_HEAD;
 
@@ -153,12 +153,11 @@ void free_page(struct list_head* target) {
 #endif
 
     if (frame_array[index].status == FREE_PAGE) {
-        printf("[*] Double free.");
+        printf("[*] Double free. \n");
         return;
     }
 
     int exp = frame_array[index].val;
-    list_add(target, &frame_freelist[exp]);
     int buddy_index = index ^ (1 << exp);
 
     while (exp + 1 < PAGE_MAX_FREE &&
@@ -274,11 +273,11 @@ void mem_test() {
     char* ptr2 = kmalloc(0x10);
     char* ptr3 = kmalloc(0x10);
     char* ptr4 = kmalloc(0x500);
-    char* ptr5 = kmalloc(0x1000);
+    // char* ptr5 = kmalloc(0x1000);
     kfree(ptr4);
-    char* ptr6 = kmalloc(0x2000);
+    // char* ptr6 = kmalloc(0x2000);
     kfree(ptr2);
     kfree(ptr3);
-    kfree(ptr5);
-    kfree(ptr6);
+    // kfree(ptr5);
+    // kfree(ptr6);
 }
