@@ -8,7 +8,7 @@
 #include <mini_uart.h>
 #include <cpio.h>
 
-#define DEBUG
+// #define DEBUG
 
 char* malloc_ptr = MEM_HEAD;
 

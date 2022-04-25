@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <allocator.h>
 #include <util.h>
+#include <sched.h>
 
 time_event *time_event_head;
 
@@ -25,7 +26,7 @@ void core_timer_disable()
 }
 
 
-
+// lower_el_one_irq_handler
 void core_timer_handler()
 {
     unsigned long pct, frq;
@@ -35,6 +36,7 @@ void core_timer_handler()
     unsigned long seconds = pct / frq;
     printf("Seconds after booting: %d\r\n", seconds);
     asm volatile("msr cntp_tval_el0, %0" :: "r" (frq * 2));
+
     return;
 }
 
@@ -46,8 +48,10 @@ void each_timer_handler()
 
     unsigned long seconds = pct / frq;
     
-    asm volatile("msr cntp_tval_el0, %0" :: "r" (frq));
+    asm volatile("msr cntp_tval_el0, %0" :: "r" (62500));
+    // asm volatile("msr cntp_tval_el0, %0" :: "r" (frq));
     
+    // handle timer event, check if the earliest timer timeout or not
     if (time_event_head) {
         if (time_event_head->expired_time == seconds) {
             printf("\r\n[*] start time: %d, duration: %d, expired time: %d\r\n", \
@@ -59,6 +63,9 @@ void each_timer_handler()
             
         }
     }
+
+    // for scheduling
+    timer_tick();
     return;
 }
 
@@ -80,8 +87,8 @@ void timer_init()
 
 void add_timer(void (*callback)(char*), int sec, char* msg)
 {
-    // time_event* add_event = kmalloc(sizeof(time_event));
-    time_event* add_event = simple_malloc(sizeof(time_event));
+    time_event* add_event = kmalloc(sizeof(time_event));
+    // time_event* add_event = simple_malloc(sizeof(time_event));
     add_event->start_time = get_current_time();
     add_event->duration = sec;
     add_event->expired_time = add_event->start_time + sec;

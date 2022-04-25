@@ -11,6 +11,8 @@ void cmd_load(void);
 void cmd_malloc(void);
 void cmd_async(void);
 void cmd_settimeout(char* buffer);
+void cmd_timer();
+void cmd_testfoo();
 void cmd_hint(void);
 
 void shell(void);

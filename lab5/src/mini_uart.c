@@ -123,7 +123,6 @@ void disable_uart_interrupt()
 
 void uart_handler()
 {
-    // uart_send_string("uart\r\n");
 
     disable_uart_interrupt();
     unsigned int iir = get(AUX_MU_IIR_REG);
@@ -131,15 +130,16 @@ void uart_handler()
     if (iir & 0b010) {
         // buffer empty
         while (write_buf_head != write_buf_tail) {
-            put(AUX_MU_IO_REG, write_buf[write_buf_tail++]);
-            if (write_buf_tail == BUFFER_MAX_SIZE) {
-                write_buf_tail = 0;
+            put(AUX_MU_IO_REG, write_buf[write_buf_head++]);
+            if (write_buf_head == BUFFER_MAX_SIZE) {
+                write_buf_head = 0;
             }
         }
         unsigned int selector;
         selector = get(AUX_MU_IER_REG);
         selector &= ~(0x2);
         put(AUX_MU_IER_REG, selector);
+
     }
     // read
     else if (iir & 0b100) {
@@ -161,13 +161,24 @@ char uart_async_recv()
     return c == '\r' ? '\n' : c;
 }
 
+void uart_async_recvline(char *buf)
+{
+    char c = uart_async_recv();
+    while(c != '\n') {
+        *buf = c;
+        buf++;
+        uart_async_send(c);
+        c = uart_async_recv();
+    }
+    *buf = '\0';
+}
+
 void uart_async_send(char c)
 {
-    if (write_buf_head != write_buf_tail) {
-        write_buf[write_buf_head++] = c;
-    }
-    if (write_buf_head == BUFFER_MAX_SIZE) {
-        write_buf_head = 0;
+    // if (write_buf_head != write_buf_tail) {
+    write_buf[write_buf_tail++] = c;
+    if (write_buf_tail == BUFFER_MAX_SIZE) {
+        write_buf_tail = 0;
     }
     unsigned int selector;
     selector = get(AUX_MU_IER_REG);
@@ -178,9 +189,9 @@ void uart_async_send(char c)
 void uart_async_send_string(char *str)
 {
     while (*str != '\0') {
-        write_buf[write_buf_head++] = *str++;
-        if (write_buf_head == BUFFER_MAX_SIZE) {
-            write_buf_head = 0;
+        write_buf[write_buf_tail++] = *str++;
+        if (write_buf_tail == BUFFER_MAX_SIZE) {
+            write_buf_tail = 0;
         }
     }
     unsigned int selector;

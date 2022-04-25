@@ -65,6 +65,17 @@ disable_interrupt:
 	msr	daifset, 0xf
 	ret
 
+.global disable_irq_save
+disable_irq_save:
+    mrs x0, DAIF
+    msr DAIFSet, 0x2
+    ret
+
+.global irq_restore
+irq_restore:
+    msr DAIF, x0
+    ret
+
 exception_handler:
     save_all
     mrs x0, spsr_el1
@@ -83,6 +94,12 @@ _lower_el_one_irq:
 _current_sp_elx_irq:
     save_all
     bl current_sp_elx_irq_handler
+    load_all
+    eret
+
+_lower_el_one_sync:
+    save_all
+    bl lower_el_one_sync_handler
     load_all
     eret
 
@@ -124,7 +141,7 @@ current_sp_elx_serror:
 // Exception from a lower EL and at least one lower ELs are AArch32
 .align 7
 lower_el_one_sync:
-    b exception_handler
+    b _lower_el_one_sync
 .align 7
 lower_el_one_irq:
     b _lower_el_one_irq

@@ -3,16 +3,27 @@
 #include <shell.h>
 #include <exception.h>
 #include <allocator.h>
+#include <sched.h>
+#include <util.h>
+#include <printf.h>
+
+
+void idle()
+{
+    while (1) {
+        schedule();
+    }
+}
 
 void main(char* fdt)
 {
     uart_init();
-
-    enable_interrupt();
-    timer_init();
-
     mm_init(fdt);
+    timer_init();
+    sched_init();
     
-    uart_send_string("Hello! Type command to start.\r\n");
-    shell();
+    // shell();
+    kthread_create(&shell, NULL);
+    enable_interrupt();
+    idle();
 }

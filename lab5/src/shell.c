@@ -8,6 +8,7 @@
 #include <fdt.h>
 #include <timer.h>
 #include <printf.h>
+#include <sched.h>
 
 static char buf[0x200];
 
@@ -135,16 +136,37 @@ void cmd_timer()
     add_timer(print_msg, 10, "timer 10");
 }
 
+void fooo()
+{
+    for(int i = 0; i < 10; ++i) {
+        printf("Thread id: %d %d\n", get_current()->pid, i);
+        delay(1000000);
+        schedule();
+    }
+}
+
+void cmd_testfoo()
+{
+    for (int i = 0; i < 5; i++) {
+        kthread_create(&fooo, "foooo");    
+    }
+    printf("lkmomonononoinonoinonin???\r\n");
+}
+
 void cmd_hint()
 {
     uart_send_string("Command not found\r\n");
     uart_send_string("Use \"help\" to see help \r\n");
 }
 
+#include <exception.h>
 void shell(void)
 {
-    while (1) {        
+    uart_send_string("Hello! Type command to start.\r\n");
+    while (1) {
+        enable_interrupt();
         uart_send_string("# ");
+
         uart_recvline(buf);
         uart_send_string("\r\n");
 
@@ -172,6 +194,8 @@ void shell(void)
             mem_test();
         } else if (!strcmp("pagetest", buf)) {
             page_test();
+        } else if (!strcmp("testfoo", buf)) {
+            cmd_testfoo();
         } else {
             cmd_hint();
         }
