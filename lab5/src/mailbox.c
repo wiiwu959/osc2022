@@ -13,10 +13,10 @@
 
 volatile unsigned int __attribute__((aligned(16))) mailbox[16];
 
-void mailbox_call()
+void mailbox_call(unsigned char ch, unsigned int *mbox)
 {
     // Combine the message address (upper 28 bits) with channel number (lower 4 bits)
-    unsigned int r = (((unsigned int)((unsigned long)&mailbox) & ~0xF) | (MAILBOX_CHANNEL & 0xF));
+    unsigned int r = (((unsigned int)((unsigned long)mbox) & ~0xF) | (ch & 0xF));
 
     // Check if Mailbox 0 status register’s full flag is set.
     // If not, then you can write to Mailbox 1 Read/Write register.
@@ -50,7 +50,7 @@ unsigned int get_board_revision()
     // tags end
     mailbox[6] = END_TAG;
 
-    mailbox_call(); // message passing procedure call, you should implement it following the 6 steps provided above.
+    mailbox_call(MAILBOX_CHANNEL, mailbox); // message passing procedure call, you should implement it following the 6 steps provided above.
 
     return mailbox[5]; // it should be 0xa020d3 for rpi3 b+
 }
@@ -71,7 +71,7 @@ struct arm_memory get_arm_memory()
     // tags end
     mailbox[7] = END_TAG;
 
-    mailbox_call(mailbox);
+    mailbox_call(MAILBOX_CHANNEL, mailbox);
 
     struct arm_memory result = { .base_addr = mailbox[5], .size = mailbox[6]};
     

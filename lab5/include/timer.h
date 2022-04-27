@@ -18,6 +18,7 @@ typedef struct _time_event
 } time_event;
 
 void timer_init();
+void timer_add(void (*callback)(char*), int sec, char* msg);
 
 void core_timer_enable(void);
 void core_timer_disable(void);
@@ -28,6 +29,5 @@ void each_timer_handler(void);
 void set_timeout(int sec);
 unsigned long get_current_time();
 
-void add_timer(void (*callback)(char*), int sec, char* msg);
 
 #endif  /* _TIMER_H */

@@ -29,7 +29,7 @@ int cpio_align(int num, int base)
     return 0;
 }
 
-void cpio_list(uint64_t initramfs_loc)
+void cpio_list()
 {
     struct cpio_newc_header *ramfs = (struct cpio_newc_header *)initramfs_loc;
     char* ptr = (char*)initramfs_loc;
@@ -58,7 +58,7 @@ void cpio_list(uint64_t initramfs_loc)
     }
 }
 
-void cpio_cat(char* catfile, uint64_t initramfs_loc)
+void cpio_cat(char* catfile)
 {
     struct cpio_newc_header *ramfs = (struct cpio_newc_header *)initramfs_loc;
     char* ptr = (char*)ramfs;
@@ -89,8 +89,8 @@ void cpio_cat(char* catfile, uint64_t initramfs_loc)
     }
 }
 
-void cpio_exec(char* getfile, uint64_t initramfs_loc)
-{
+// TODO: No such file handle
+struct file_info *cpio_get_file(char *getfile) {
     struct cpio_newc_header *ramfs = (struct cpio_newc_header *)initramfs_loc;
     char* ptr = (char*)ramfs;
     while (1) {
@@ -112,31 +112,21 @@ void cpio_exec(char* getfile, uint64_t initramfs_loc)
             break;
         } else if (!strcmp(getfile, filename)) {
             ptr += namesize + name_align;
-            char* load_addr = (char*)0x1000000;
-
-            char* content = ptr;
-            char* loading = load_addr;
-
-            while (filesize--) {
-                *loading = *content;
-                content++;
-                loading++;
+            char *load_addr = NULL;
+            if (filesize) {
+                load_addr = kmalloc(filesize);
+                char* content = ptr;
+                char* loading = load_addr;
+                memcpy(load_addr, (char *)ptr, filesize);
             }
-
-            asm volatile (
-                "mov x10, 0 \n\t"
-                "msr spsr_el1, x10 \n\t"
-                "msr elr_el1, %0 \n\t" 
-                "msr sp_el0, %1 \n\t"
-                "eret \n\t"
-                ::  "r" (load_addr),
-                    "r" (load_addr + 0x1000)
-            );
-            
-            break;
+            struct file_info* fi;
+            fi->data = load_addr;
+            fi->data_size = filesize;
+            return fi;
         }
         ptr += namesize + name_align + filesize + file_align;
     }
+    return NULL;
 }
 
 // for kernel init

@@ -1,12 +1,14 @@
 #include <stddef.h>
 #include <sched.h>
 #include <allocator.h>
-#include <string.h>
 #include <list.h>
-
+#include <mm.h>
 #include <printf.h>
+#include <syscall.h>
 
 struct list_head task_queue;
+struct list_head dead_queue;
+
 int top_id;
 
 void preempt_disable()
@@ -27,6 +29,9 @@ struct task_struct* new_task()
 
     ts->pid = top_id++;
     ts->kernel_stack = NULL;
+    ts->user_stack = NULL;
+    ts->data = NULL;
+    ts->data_size = 0;
     ts->preempt_count = 0;
     ts->counter = 0;
 
@@ -37,6 +42,8 @@ void sched_init()
 {
     top_id = 0;
     INIT_LIST_HEAD(&task_queue);
+    INIT_LIST_HEAD(&dead_queue);
+
     struct task_struct *cur = new_task();
 
     set_current(cur);
@@ -45,7 +52,6 @@ void sched_init()
 
 void sched_add_task(struct task_struct* ts)
 {
-    printf("sched_add_task\n");
     preempt_disable();
     size_t flags = disable_irq_save();
 
@@ -61,24 +67,38 @@ void sched_del_task(struct task_struct* ts)
     size_t flags = disable_irq_save();
 
     list_del(&ts->list);
-    if (ts->kernel_stack) {
-        kfree(ts->kernel_stack);
-    }
-    kfree(ts);
+    ts->state = TASK_DEAD;
+    list_add_tail(ts, &dead_queue);
     
     irq_restore(flags);
     preempt_enable();
 }
 
-void kthread_fin()
+void sched_kill_task(int id)
 {
-    sched_del_task(get_current());
-    schedule();
+    preempt_disable();
+    size_t flags = disable_irq_save();
+
+    struct task_struct* ts;
+    list_for_each_entry(ts, &task_queue, list) {
+        if (ts->pid == id) {
+            list_del(&ts->list);
+            ts->state = TASK_DEAD;
+            list_add_tail(ts, &dead_queue);
+            printf("Pid %d killed.\r\n", id);
+            return;
+        }
+    }
+    printf("[*] Pid %d is not running.\r\n", id);
+    return;
+
+    
+    irq_restore(flags);
+    preempt_enable();
 }
 
 void kthread_create(unsigned long fn, unsigned long arg)
 {
-    printf("kthread_create\n");
     struct task_struct* ts = new_task();
 
     ts->preempt_count = 1;
@@ -92,24 +112,40 @@ void kthread_create(unsigned long fn, unsigned long arg)
     sched_add_task(ts);
 }
 
+void kthread_fin()
+{
+    sched_del_task(get_current());
+    schedule();
+}
+
+void kthread_kill_zombies()
+{
+    while (!list_empty(&dead_queue)) {
+        struct task_struct *dead = list_first_entry(&dead_queue, struct task_struct, list);
+        if (dead->kernel_stack) {
+            kfree(dead->kernel_stack);
+            kfree(dead->user_stack);
+        }
+        kfree(dead);
+    }
+}
+
 static struct task_struct *next_task() {
     struct task_struct *ts = list_first_entry(&task_queue, struct task_struct, list);
-	
+
     list_del(&ts->list);
-	list_add_tail(&ts->list, &task_queue);
+    list_add_tail(&ts->list, &task_queue);
 
     return ts;
 }
 
 void schedule() 
 {
-    // printf("schedule\n");
     struct task_struct *cur = get_current();
     if (cur->preempt_count > 0) {
         return;
     }
     
-    // printf("Current id = %d\r\n", get_current()->pid);
     size_t flags = disable_irq_save();
     struct task_struct *next = next_task();
     next->counter = DEFAULT_TIMEOUT;
@@ -118,18 +154,22 @@ void schedule()
     switch_to(cur, next);
 }
 
-void timer_tick()
+void sched_timer_tick()
 {
     get_current()->counter--;
-    // printf("tick\n");
 
     if (get_current()->counter > 0 || get_current()->preempt_count > 0) {
-        // printf("counter = %d\n", get_current()->counter);
-        // printf("preempt_count = %d\n", get_current()->preempt_count);
         return;
     }
 
     enable_interrupt();
     schedule();
     disable_interrupt();
+}
+
+
+int kthread_fork(struct trap_frame* regs) 
+{  
+ 
+
 }

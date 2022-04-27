@@ -2,16 +2,14 @@
 #include <timer.h>
 #include <shell.h>
 #include <exception.h>
-#include <allocator.h>
 #include <sched.h>
-#include <util.h>
-#include <printf.h>
 
 
 void idle()
 {
     while (1) {
         schedule();
+        kthread_kill_zombies();
     }
 }
 
@@ -22,7 +20,6 @@ void main(char* fdt)
     timer_init();
     sched_init();
     
-    // shell();
     kthread_create(&shell, NULL);
     enable_interrupt();
     idle();

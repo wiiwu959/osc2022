@@ -5,6 +5,7 @@
 #include <list.h>
 
 #define TASK_RUNNING    0
+#define TASK_DEAD       1
 
 #define DEFAULT_TIMEOUT 15
 
@@ -32,6 +33,9 @@ struct task_struct {
     long preempt_count;
 
     void* kernel_stack;
+    void* user_stack;
+    void* data;
+    int data_size;
 
     struct list_head list;
 };
@@ -45,12 +49,13 @@ void sched_init();
 void schedule();
 void sched_add_task(struct task_struct* ts);
 void sched_del_task(struct task_struct* ts);
+void sched_kill_task(int id);
+void sched_timer_tick();
 
 // kthread
 void kthread_create(unsigned long fn, unsigned long arg);
 void kthread_fin();
-
-void timer_tick();
+void kthread_kill_zombies();
 
 // asm
 void switch_to(struct task_struct* prev, struct task_struct* next);

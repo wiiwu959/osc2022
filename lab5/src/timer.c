@@ -65,7 +65,7 @@ void each_timer_handler()
     }
 
     // for scheduling
-    timer_tick();
+    sched_timer_tick();
     return;
 }
 
@@ -85,10 +85,9 @@ void timer_init()
     time_event_head = NULL;
 }
 
-void add_timer(void (*callback)(char*), int sec, char* msg)
+void timer_add(void (*callback)(char*), int sec, char* msg)
 {
     time_event* add_event = kmalloc(sizeof(time_event));
-    // time_event* add_event = simple_malloc(sizeof(time_event));
     add_event->start_time = get_current_time();
     add_event->duration = sec;
     add_event->expired_time = add_event->start_time + sec;

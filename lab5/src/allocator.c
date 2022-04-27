@@ -45,6 +45,7 @@ void mm_init(char* fdt)
 {
     initramfs_init(fdt);
     page_base = (uint64_t)0;
+    // TODO: find it in dtb
     page_end = (uint64_t)0x3c000000;
 
     page_total = (page_end - page_base) / PAGE_SIZE;
@@ -225,19 +226,24 @@ void* alloc_chunk(int size)
 
 void* kmalloc(int size)
 {
+    size_t flags = disable_irq_save();
+    void* ret_alloc;
     if (size <= 0x800) {
-        return alloc_chunk(size);
+        ret_alloc = alloc_chunk(size);
     } else if (size <= 0x1000){
-        return alloc_page(1);
+        ret_alloc = alloc_page(1);
     } else {
         int page_num = size / 0x1000;
         if ((size & 0xFFF) > 0) { page_num++; }
-        return alloc_page(page_num);
+        ret_alloc = alloc_page(page_num);
     }
+    irq_restore(flags);
+    return ret_alloc;    
 }
 
 void kfree(void *ptr)
 {
+    size_t flags = disable_irq_save();
     int index = ((char*)((intptr_t)ptr & (~0xFFF)) - (char*)page_base) / PAGE_SIZE;
     if(frame_array[index].status == IS_CHUNK) {
         int chunk_index = frame_array[index].val;
@@ -248,6 +254,7 @@ void kfree(void *ptr)
     } else {
         free_page(ptr);
     }
+    irq_restore(flags);
 }
 
 

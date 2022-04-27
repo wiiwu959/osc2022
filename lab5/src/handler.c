@@ -5,10 +5,14 @@
 #include <allocator.h>
 #include <exception.h>
 #include <sched.h>
+#include <sysregs.h>
+#include <syscall.h>
 
 #define WAITING 0
 #define RUNNING 1
 
+// TODO: Fix this shit
+// Preemption ??? Not working now --- start
 typedef struct _task {
     int status;
     int priority;
@@ -50,12 +54,16 @@ void add_task(void (*callback)(void), int priority)
         cur->next = add;
     }
 }
+// Preemption ??? Not working now --- end
+
 void exception_entry(unsigned long spsr, unsigned long elr, unsigned long esr) 
 {
     printf("spsr_el1\t%x\r\n", spsr);
     printf("elr_el1\t\t%x\r\n", elr);
     printf("esr_el1\t\t%x\r\n\n", esr);
 
+    disable_interrupt();
+    while(1);
     return;
 }
 
@@ -72,74 +80,21 @@ void current_sp_elx_irq_handler()
         each_timer_handler();
     } else if (!(get(AUX_MU_IIR_REG) & 1)) {
         // add_task(uart_handler, 0);
-        // printf("uart");
         uart_handler();
     }
 }
 
-#include <sched.h>
-#define ESR_ELx_EC(esr)	((esr & 0xFC000000) >> 26)
-#define ESR_ELx_ISS(esr)	(esr & 0x03FFFFFF)
-
-#define ESR_ELx_EC_SVC64 0b010101
-#define ESR_ELx_EC_DABT_LOW 0b100100
-#define ESR_ELx_EC_IABT_LOW 0b100000
-#define ESR_ELx_EC_BRK_LOW 0b110000
-
-#define read_sysreg(r) ({                       \
-    unsigned long __val;                        \
-    asm volatile("mrs %0, " #r : "=r" (__val)); \
-    __val;                                      \
-})
-
-#define write_sysreg(r, __val) ({                  \
-	asm volatile("msr " #r ", %0" :: "r" (__val)); \
-})
-
-struct pt_regs {
-    unsigned long regs[31];
-    unsigned long sp;
-    unsigned long pc;
-    unsigned long pstate;
-};
-
-
-void lower_el_one_sync_handler(struct pt_regs* regs)
+void lower_el_one_sync_handler(struct trap_frame *regs)
 {
-    unsigned long esr = read_sysreg(esr_el1);
-    unsigned ec = ESR_ELx_EC(esr);
-    unsigned iss = ESR_ELx_ISS(esr);
-
     enable_interrupt();
-
-    switch (ec) {
-    case ESR_ELx_EC_SVC64:
-        /* iss[24-16] = res0  */
-        /* iss[15-0]  = imm16 */
-        // if ((iss & 0xffff) == 0) {
-        //     svc_handler(regs);
-        // }
-        printf("ESR_ELx_EC_SVC64\r\n");
-        break;
-
-    case ESR_ELx_EC_DABT_LOW:
-        /* Userland data abort exception */
-        printf("ESR_ELx_EC_DABT_LOW\r\n");
-        break;
-
-    case ESR_ELx_EC_IABT_LOW:
-        /* Userland instruction abort exception */
-        printf("ESR_ELx_EC_IABT_LOW\r\n");
-        break;
-
-    case ESR_ELx_EC_BRK_LOW:
-        printf("Breakpoint exception\r\n");
-
-    default:
-        printf("Unknown exception: EC=0x%x, ISS=0x%x\r\n", ec, iss);
+    unsigned long esr;
+    asm volatile("mrs %0, esr_el1": "=r" (esr));
+    if ((esr >> ESR_ELx_EC_SHIFT) == ESR_ELx_EC_SVC64) {
+        syscall_handler(regs);
+    } else {
+        printf("Unknown lower_el_one_sync exception.\n");
+        while (1) {}
     }
-
+    disable_interrupt();
     schedule();
-    // disable_interrupt();
-    return;
 }

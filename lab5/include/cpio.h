@@ -21,6 +21,11 @@ struct cpio_newc_header {
     char c_check[8];
 };
 
+struct file_info {
+    void* data;
+    int data_size;
+};
+
 uint64_t initramfs_loc;
 uint64_t initramfs_end;
 uint64_t memory_end;
@@ -30,8 +35,8 @@ void initramfs_init(char* fdt);
 
 unsigned int cpio_read_8hex(char* num);
 int cpio_align(int num, int base);
-void cpio_list(uint64_t initramfs_loc);
-void cpio_cat(char* catfile, uint64_t initramfs_loc);
-void cpio_exec(char* getfile, uint64_t initramfs_loc);
+void cpio_list();
+void cpio_cat(char* catfile);
+struct file_info *cpio_get_file(char *getfile);
 
 #endif  /*_CPIO_H */

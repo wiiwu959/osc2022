@@ -9,6 +9,7 @@
 #include <timer.h>
 #include <printf.h>
 #include <sched.h>
+#include <exec.h>
 
 static char buf[0x200];
 
@@ -58,7 +59,7 @@ void cmd_hardware(void)
 
 void cmd_ls()
 {
-    cpio_list(initramfs_loc);
+    cpio_list();
 }
 
 void cmd_cat()
@@ -66,7 +67,7 @@ void cmd_cat()
     uart_send_string("Filename: ");
     uart_recvline(buf);
     uart_send_string("\r\n");
-    cpio_cat(buf, initramfs_loc);
+    cpio_cat(buf);
 }
 
 void cmd_load()
@@ -74,7 +75,7 @@ void cmd_load()
     uart_send_string("Filename: ");
     uart_recvline(buf);
     uart_send_string("\r\n");
-    cpio_exec(buf, initramfs_loc);
+    exec_program(buf);
 }
 
 void cmd_async()
@@ -119,21 +120,21 @@ void cmd_settimeout(char* buffer)
     }
 
     int sec = atoi(arg[1]);
-    add_timer(print_msg, sec, arg[2]);
+    timer_add(print_msg, sec, arg[2]);
 }
 
 void cmd_timer()
 {
-    add_timer(print_msg, 1, "timer 1");
-    add_timer(print_msg, 2, "timer 2");
-    add_timer(print_msg, 3, "timer 3");
-    add_timer(print_msg, 4, "timer 4");
-    add_timer(print_msg, 5, "timer 5");
-    add_timer(print_msg, 6, "timer 6");
-    add_timer(print_msg, 7, "timer 7");
-    add_timer(print_msg, 8, "timer 8");
-    add_timer(print_msg, 9, "timer 9");
-    add_timer(print_msg, 10, "timer 10");
+    timer_add(print_msg, 1, "timer 1");
+    timer_add(print_msg, 2, "timer 2");
+    timer_add(print_msg, 3, "timer 3");
+    timer_add(print_msg, 4, "timer 4");
+    timer_add(print_msg, 5, "timer 5");
+    timer_add(print_msg, 6, "timer 6");
+    timer_add(print_msg, 7, "timer 7");
+    timer_add(print_msg, 8, "timer 8");
+    timer_add(print_msg, 9, "timer 9");
+    timer_add(print_msg, 10, "timer 10");
 }
 
 void fooo()
@@ -164,6 +165,7 @@ void shell(void)
 {
     uart_send_string("Hello! Type command to start.\r\n");
     while (1) {
+        // TODO: Find out WTF happenning to this shit
         enable_interrupt();
         uart_send_string("# ");
 

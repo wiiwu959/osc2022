@@ -34,5 +34,5 @@ set_current:
 ret_from_fork:
     bl     preempt_enable
     mov    x0, x20
-    blr    x19         //should never return
+    blr    x19
     bl     kthread_fin

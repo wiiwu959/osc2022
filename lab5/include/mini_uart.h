@@ -64,6 +64,7 @@ void disable_uart_interrupt(void);
 
 void uart_handler();
 char uart_async_recv();
+void uart_async_recvn(char* buf, int len);
 void uart_async_recvline(char *buf);
 void uart_async_send(char c);
 void uart_async_send_string(char *str);
