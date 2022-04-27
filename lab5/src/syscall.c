@@ -7,7 +7,7 @@
 
 void sys_getpid(struct trap_frame* regs)
 {
-    regs->regs[0] = get_current()->pid;
+    regs->regs[0] = current->pid;
 }
 
 void sys_uartread(struct trap_frame* regs)
@@ -28,7 +28,7 @@ void sys_uartwrite(struct trap_frame* regs)
     regs->regs[0] = size;
 }
 
-// Fuck!
+// Fuck ?? Maybe not that bad?
 void sys_exec(struct trap_frame* regs)
 {
     char* name = regs->regs[0];
@@ -39,8 +39,8 @@ void sys_exec(struct trap_frame* regs)
 // Fuck!
 void sys_fork(struct trap_frame* regs)
 {
-    // printf("sys_fork\n");
-    kthread_fork(regs);
+    int pid = kthread_fork(regs);
+    regs->regs[0] = pid;
 }
 
 void sys_exit(struct trap_frame* regs)
@@ -55,7 +55,6 @@ void sys_mbox_call(struct trap_frame* regs)
     mailbox_call(ch, mbox);
 }
 
-// Fuck
 void sys_kill(struct trap_frame* regs)
 {
     int pid = regs->regs[0];
@@ -65,9 +64,9 @@ void sys_kill(struct trap_frame* regs)
 void sys_test(struct trap_frame* regs)
 {
     printf("[*] Testing syscall 8\r\n");
-    printf("sp_el0\t%x\r\n", regs->sp_el0);
-    printf("spsr_el1\t%x\r\n", regs->spsr_el1);
-    printf("elr_el1\t%x\r\n", regs->elr_el1);
+    // printf("elr_el1\t%x\r\n", regs->elr_el1);
+    // printf("sp_el0\t%x\r\n", regs->sp_el0);
+    // printf("spsr_el1\t%x\r\n", regs->spsr_el1);
 }
 
 typedef void *(*func)(struct trap_frame*);

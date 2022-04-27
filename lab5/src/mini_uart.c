@@ -52,7 +52,6 @@ void uart_recvn(char *buf, int len)
     for (int i = 0; i < len; i++) {
         while (!(get(AUX_MU_LSR_REG) & 0x01)) {};
         buf[i] = (get(AUX_MU_IO_REG) & 0xFF);
-        uart_send(buf[i]);
     }
 }
 

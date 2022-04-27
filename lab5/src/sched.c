@@ -13,12 +13,12 @@ int top_id;
 
 void preempt_disable()
 {
-	get_current()->preempt_count++;
+	current->preempt_count++;
 }
 
 void preempt_enable()
 {
-	get_current()->preempt_count--;
+	current->preempt_count--;
 }
 
 struct task_struct* new_task()
@@ -54,9 +54,8 @@ void sched_add_task(struct task_struct* ts)
 {
     preempt_disable();
     size_t flags = disable_irq_save();
-
     list_add_tail(&ts->list, &task_queue);
-    
+
     irq_restore(flags);
     preempt_enable();
 }
@@ -84,6 +83,7 @@ void sched_kill_task(int id)
         if (ts->pid == id) {
             list_del(&ts->list);
             ts->state = TASK_DEAD;
+
             list_add_tail(ts, &dead_queue);
             printf("Pid %d killed.\r\n", id);
             return;
@@ -114,20 +114,20 @@ void kthread_create(unsigned long fn, unsigned long arg)
 
 void kthread_fin()
 {
-    sched_del_task(get_current());
+    sched_del_task(current);
     schedule();
 }
 
 void kthread_kill_zombies()
 {
-    while (!list_empty(&dead_queue)) {
-        struct task_struct *dead = list_first_entry(&dead_queue, struct task_struct, list);
-        if (dead->kernel_stack) {
-            kfree(dead->kernel_stack);
-            kfree(dead->user_stack);
-        }
-        kfree(dead);
-    }
+    // while (!list_empty(&dead_queue)) {
+    //     struct task_struct *dead = list_first_entry(&dead_queue, struct task_struct, list);
+    //     if (dead->kernel_stack) {
+    //         kfree(dead->kernel_stack);
+    //         kfree(dead->user_stack);
+    //     }
+    //     kfree(dead);
+    // }
 }
 
 static struct task_struct *next_task() {
@@ -141,7 +141,7 @@ static struct task_struct *next_task() {
 
 void schedule() 
 {
-    struct task_struct *cur = get_current();
+    struct task_struct *cur = current;
     if (cur->preempt_count > 0) {
         return;
     }
@@ -152,13 +152,14 @@ void schedule()
 
     irq_restore(flags);
     switch_to(cur, next);
+
 }
 
 void sched_timer_tick()
 {
-    get_current()->counter--;
+    current->counter--;
 
-    if (get_current()->counter > 0 || get_current()->preempt_count > 0) {
+    if (current->counter > 0 || current->preempt_count > 0) {
         return;
     }
 
@@ -169,7 +170,52 @@ void sched_timer_tick()
 
 
 int kthread_fork(struct trap_frame* regs) 
-{  
- 
+{
+    size_t flags = disable_irq_save();
 
+    struct task_struct* child = new_task();
+
+    // *child = *current;
+
+    child->preempt_count = 0;
+    child->state = current->state;
+    child->counter = 0;
+
+    child->kernel_stack = kmalloc(PAGE_SIZE);
+    child->user_stack = kmalloc(PAGE_SIZE);
+
+    // memcpy(child->kernel_stack, current->kernel_stack, PAGE_SIZE);
+    memcpy(child->user_stack, current->user_stack, PAGE_SIZE);
+
+    child->data = current->data;
+    // child->data = kmalloc(current->data_size);
+    // memcpy(child->data, current->data, current->data_size);
+    // child->data_size = current->data_size;
+    
+
+    memcpy(&child->cpu_context, &current->cpu_context, sizeof(struct cpu_context));
+    
+    struct trap_frame* child_frame = (size_t)child->kernel_stack + PAGE_SIZE - sizeof(struct trap_frame);
+    memcpy(child_frame, regs, sizeof(struct trap_frame));
+    
+    // child_frame->sp = (size_t)child->user_stack + (regs->sp - (size_t)current->user_stack);
+    child_frame->sp = (size_t)child->user_stack + (regs->sp - (size_t)current->user_stack);
+    child_frame->regs[0] = 0;
+
+    
+    // child->cpu_context.x19 = restore_regs_eret;
+    // child->cpu_context.x20 = current->cpu_context.x20;
+    child->cpu_context.sp = child_frame;
+    // child->cpu_context.pc = ret_from_fork;
+    child->cpu_context.pc = restore_regs_eret;
+
+
+    sched_add_task(child);
+    irq_restore(flags);
+    return child->pid;
+}
+
+void rr()
+{
+    printf("RR\r\n");
 }

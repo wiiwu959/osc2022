@@ -1,6 +1,7 @@
 #include <cpio.h>
 #include <sched.h>
 #include <allocator.h>
+#include <printf.h>
 
 void exec_user_program()
 {
@@ -10,14 +11,19 @@ void exec_user_program()
         "msr elr_el1, %0 \n\t" 
         "msr sp_el0, %1 \n\t"
         "eret \n\t"
-        ::  "r" (get_current()->data),
-            "r" (get_current()->user_stack + PAGE_SIZE - sizeof(struct cpu_context))
+        ::  "r" (current->data),
+            "r" (current->user_stack + PAGE_SIZE - sizeof(struct cpu_context))
     );
 }
 
 void exec_program(char* filename)
 {
     struct file_info* fi = cpio_get_file(filename);
+
+    if (fi == NULL) {
+        printf("[*] exec program failed.\r\n");
+        return;
+    }
 
     struct task_struct* ts = new_task();
     ts->kernel_stack = kmalloc(PAGE_SIZE);

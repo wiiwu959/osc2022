@@ -17,9 +17,12 @@
 
 struct trap_frame {
     unsigned long regs[31];
-    unsigned long elr_el1;
-    unsigned long spsr_el1;
-    unsigned long sp_el0;
+    unsigned long sp;
+    unsigned long pc;
+    unsigned long pstate;
+    // unsigned long sp_el0;
+    // unsigned long elr_el1;
+    // unsigned long spsr_el1;
 };
 
 void syscall_handler(struct trap_frame* regs);

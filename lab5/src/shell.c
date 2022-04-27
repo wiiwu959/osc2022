@@ -140,7 +140,7 @@ void cmd_timer()
 void fooo()
 {
     for(int i = 0; i < 10; ++i) {
-        printf("Thread id: %d %d\n", get_current()->pid, i);
+        printf("Thread id: %d %d\n", current->pid, i);
         delay(1000000);
         schedule();
     }
@@ -164,6 +164,7 @@ void cmd_hint()
 void shell(void)
 {
     uart_send_string("Hello! Type command to start.\r\n");
+    // exec_program("userprog2");
     while (1) {
         // TODO: Find out WTF happenning to this shit
         enable_interrupt();
@@ -202,4 +203,5 @@ void shell(void)
             cmd_hint();
         }
     }
+
 }

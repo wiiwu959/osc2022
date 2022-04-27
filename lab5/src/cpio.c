@@ -109,16 +109,11 @@ struct file_info *cpio_get_file(char *getfile) {
         char* filename = ptr;
         if (!strcmp("TRAILER!!!", filename)) {
             uart_send_string("[*] No such file.\r\n");
-            break;
+            return NULL;
         } else if (!strcmp(getfile, filename)) {
             ptr += namesize + name_align;
-            char *load_addr = NULL;
-            if (filesize) {
-                load_addr = kmalloc(filesize);
-                char* content = ptr;
-                char* loading = load_addr;
-                memcpy(load_addr, (char *)ptr, filesize);
-            }
+            char *load_addr = kmalloc(filesize);
+            memcpy(load_addr, (char *)ptr, filesize);
             struct file_info* fi;
             fi->data = load_addr;
             fi->data_size = filesize;

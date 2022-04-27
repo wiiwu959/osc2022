@@ -9,6 +9,8 @@
 
 #define DEFAULT_TIMEOUT 15
 
+#define current get_current()
+
 struct cpu_context {
     unsigned long x19;
     unsigned long x20;
@@ -62,6 +64,9 @@ void switch_to(struct task_struct* prev, struct task_struct* next);
 void set_current(struct task_struct *ts);
 struct task_struct* get_current();
 void ret_from_fork(void);
+void fork_handler(void);
+void restore_regs_eret(void);
+void rr();
 
 
 #endif  /* _SCHED_H */
