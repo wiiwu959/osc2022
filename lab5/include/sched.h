@@ -45,13 +45,15 @@ struct task_struct {
 void preempt_enable();
 void preempt_disable();
 
-struct task_struct* new_task();
 
-void sched_init();
 void schedule();
+void sched_init();
+int sched_newpid();
+struct task_struct* sched_new_task();
 void sched_add_task(struct task_struct* ts);
 void sched_del_task(struct task_struct* ts);
 void sched_kill_task(int id);
+static struct task_struct *sched_next_task();
 void sched_timer_tick();
 
 // kthread
@@ -63,10 +65,9 @@ void kthread_kill_zombies();
 void switch_to(struct task_struct* prev, struct task_struct* next);
 void set_current(struct task_struct *ts);
 struct task_struct* get_current();
-void ret_from_fork(void);
-void fork_handler(void);
+void kthread_func_wrapper(void);
 void restore_regs_eret(void);
-void rr();
+
 
 
 #endif  /* _SCHED_H */

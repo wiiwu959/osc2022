@@ -2,6 +2,7 @@
 #include <sched.h>
 #include <allocator.h>
 #include <printf.h>
+#include <syscall.h>
 
 void exec_user_program()
 {
@@ -25,7 +26,7 @@ void exec_program(char* filename)
         return;
     }
 
-    struct task_struct* ts = new_task();
+    struct task_struct* ts = sched_new_task();
     ts->kernel_stack = kmalloc(PAGE_SIZE);
     ts->user_stack = kmalloc(PAGE_SIZE);
 
@@ -34,6 +35,32 @@ void exec_program(char* filename)
     ts->data = fi->data;
     ts->data_size = fi->data_size;
 
+    // free(fi);
+
     sched_add_task(ts);
     return;
+}
+#include <sched.h>
+#include <syscall.h>
+// int exec_user(const char *name, char *const argv[])
+int exec_user(struct trap_frame* regs)
+{
+
+    size_t flags = disable_irq_save();
+    preempt_disable();
+
+    char* name = regs->regs[0];
+    char** arg = regs->regs[1];
+
+    struct file_info* fi = cpio_get_file(name);
+    struct task_struct *ts = current;
+
+    current->pid = sched_newpid();
+
+    regs->regs[30] = fi->data;
+    regs->sp = current->user_stack + PAGE_SIZE - sizeof(struct trap_frame);
+
+    irq_restore(flags);
+    preempt_enable();
+
 }

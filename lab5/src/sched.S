@@ -30,8 +30,8 @@ set_current:
     msr tpidr_el1, x0
     ret
 
-.global ret_from_fork
-ret_from_fork:
+.global kthread_func_wrapper
+kthread_func_wrapper:
     bl     preempt_enable
     mov    x0, x20
     blr    x19

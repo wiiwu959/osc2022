@@ -21,7 +21,42 @@ void preempt_enable()
 	current->preempt_count--;
 }
 
-struct task_struct* new_task()
+int sched_newpid()
+{
+    int cur = top_id;
+    top_id++;
+    return cur;
+}
+
+void schedule() 
+{
+    struct task_struct *cur = current;
+    if (cur->preempt_count > 0) {
+        return;
+    }
+    
+    size_t flags = disable_irq_save();
+    struct task_struct *next = sched_next_task();
+    next->counter = DEFAULT_TIMEOUT;
+
+    irq_restore(flags);
+    switch_to(cur, next);
+}
+
+void sched_init()
+{
+    top_id = 0;
+    INIT_LIST_HEAD(&task_queue);
+    INIT_LIST_HEAD(&dead_queue);
+
+    struct task_struct *cur = sched_new_task();
+
+    set_current(cur);
+    sched_add_task(cur);
+}
+
+
+struct task_struct* sched_new_task()
 {
     struct task_struct *ts;
     ts = kmalloc(sizeof(struct task_struct));
@@ -36,18 +71,6 @@ struct task_struct* new_task()
     ts->counter = 0;
 
     return ts;
-}
-
-void sched_init()
-{
-    top_id = 0;
-    INIT_LIST_HEAD(&task_queue);
-    INIT_LIST_HEAD(&dead_queue);
-
-    struct task_struct *cur = new_task();
-
-    set_current(cur);
-    sched_add_task(cur);
 }
 
 void sched_add_task(struct task_struct* ts)
@@ -67,92 +90,33 @@ void sched_del_task(struct task_struct* ts)
 
     list_del(&ts->list);
     ts->state = TASK_DEAD;
-    list_add_tail(ts, &dead_queue);
-    
+    list_add_tail(&ts->list, &dead_queue);
+
     irq_restore(flags);
     preempt_enable();
 }
 
 void sched_kill_task(int id)
 {
-    preempt_disable();
-    size_t flags = disable_irq_save();
-
     struct task_struct* ts;
     list_for_each_entry(ts, &task_queue, list) {
         if (ts->pid == id) {
-            list_del(&ts->list);
-            ts->state = TASK_DEAD;
-
-            list_add_tail(ts, &dead_queue);
-            printf("Pid %d killed.\r\n", id);
+            sched_del_task(ts);
+            printf("[*] Pid %d killed.\r\n", id);
             return;
         }
     }
     printf("[*] Pid %d is not running.\r\n", id);
     return;
-
-    
-    irq_restore(flags);
-    preempt_enable();
 }
 
-void kthread_create(unsigned long fn, unsigned long arg)
-{
-    struct task_struct* ts = new_task();
-
-    ts->preempt_count = 1;
-    ts->kernel_stack = kmalloc(PAGE_SIZE);
-
-	ts->cpu_context.x19 = (unsigned long)fn;
-	ts->cpu_context.x20 = arg;
-	ts->cpu_context.pc = (unsigned long)ret_from_fork;
-	ts->cpu_context.sp = ts->kernel_stack + PAGE_SIZE - sizeof(struct cpu_context);
-
-    sched_add_task(ts);
-}
-
-void kthread_fin()
-{
-    sched_del_task(current);
-    schedule();
-}
-
-void kthread_kill_zombies()
-{
-    // while (!list_empty(&dead_queue)) {
-    //     struct task_struct *dead = list_first_entry(&dead_queue, struct task_struct, list);
-    //     if (dead->kernel_stack) {
-    //         kfree(dead->kernel_stack);
-    //         kfree(dead->user_stack);
-    //     }
-    //     kfree(dead);
-    // }
-}
-
-static struct task_struct *next_task() {
+static struct task_struct *sched_next_task() {
     struct task_struct *ts = list_first_entry(&task_queue, struct task_struct, list);
 
     list_del(&ts->list);
     list_add_tail(&ts->list, &task_queue);
 
     return ts;
-}
-
-void schedule() 
-{
-    struct task_struct *cur = current;
-    if (cur->preempt_count > 0) {
-        return;
-    }
-    
-    size_t flags = disable_irq_save();
-    struct task_struct *next = next_task();
-    next->counter = DEFAULT_TIMEOUT;
-
-    irq_restore(flags);
-    switch_to(cur, next);
-
 }
 
 void sched_timer_tick()
@@ -168,12 +132,45 @@ void sched_timer_tick()
     disable_interrupt();
 }
 
+void kthread_create(unsigned long fn, unsigned long arg)
+{
+    struct task_struct* ts = sched_new_task();
+
+    ts->preempt_count = 1;
+    ts->kernel_stack = kmalloc(PAGE_SIZE);
+
+	ts->cpu_context.x19 = (unsigned long)fn;
+	ts->cpu_context.x20 = arg;
+	ts->cpu_context.pc = (unsigned long)kthread_func_wrapper;
+	ts->cpu_context.sp = ts->kernel_stack + PAGE_SIZE - sizeof(struct cpu_context);
+
+    sched_add_task(ts);
+}
+
+void kthread_fin()
+{
+    sched_del_task(current);
+    schedule();
+}
+
+void kthread_kill_zombies()
+{
+    while (!list_empty(&dead_queue)) {
+        struct task_struct *dead = list_first_entry(&dead_queue, struct task_struct, list);
+        // if (dead->kernel_stack) {
+        //     kfree(dead->kernel_stack);
+        //     kfree(dead->user_stack);
+        // }
+        kfree(dead);
+    }
+}
+
 
 int kthread_fork(struct trap_frame* regs) 
 {
     size_t flags = disable_irq_save();
 
-    struct task_struct* child = new_task();
+    struct task_struct* child = sched_new_task();
 
     // *child = *current;
 
@@ -213,9 +210,4 @@ int kthread_fork(struct trap_frame* regs)
     sched_add_task(child);
     irq_restore(flags);
     return child->pid;
-}
-
-void rr()
-{
-    printf("RR\r\n");
 }

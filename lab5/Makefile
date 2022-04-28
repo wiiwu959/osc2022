@@ -48,7 +48,7 @@ run: kernel8.img
 	qemu-system-aarch64 -M raspi3 -kernel kernel8.img -display none -serial null -serial stdio -initrd ./config/initramfs.cpio -dtb ./config/bcm2710-rpi-3-b-plus.dtb
 
 debug: kernel8.img
-	qemu-system-aarch64 -M raspi3 -kernel kernel8.img -display none -serial null -serial stdio -initrd ./config/initramfs.cpio -dtb ./config/bcm2710-rpi-3-b-plus.dtb  -s
+	qemu-system-aarch64 -M raspi3 -kernel kernel8.img -display none -serial null -serial stdio -initrd ./config/initramfs.cpio -dtb ./config/bcm2710-rpi-3-b-plus.dtb  -s -S
 
 # bootloader
 bootloader.img: $(BOOTLOADER_DIR)/linker.ld $(BOOTLOADER_OBJ_FILES) $(OBJ_FILES)

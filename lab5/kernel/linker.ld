@@ -11,14 +11,15 @@ SECTIONS
   _etext = .;
 
   . = ALIGN(0x1000);
+  _sdata = .;
+  .data : { *(.data) }
+  _edata = .;
+
+  . = ALIGN(0x1000);
   _srodata = .;
   .rodata : { *(.rodata) }
   _erodata = .;
   
-  . = ALIGN(0x1000);
-  _sdata = .;
-  .data : { *(.data) }
-  _edata = .;
 
   . = ALIGN(0x1000);
   _sbss = .;
@@ -26,6 +27,6 @@ SECTIONS
   _ebss = .;
   _end = .;
   
-  . = 0x400000;
+  . = 0x100000;
   _estack = .;
 }

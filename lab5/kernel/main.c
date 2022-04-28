@@ -3,6 +3,7 @@
 #include <shell.h>
 #include <exception.h>
 #include <sched.h>
+#include <printf.h>
 
 
 void idle()
@@ -13,14 +14,37 @@ void idle()
     }
 }
 
+void foo()
+{
+    for(int i = 0; i < 10; ++i) {
+        printf("Thread id: %d %d\n", current->pid, i);
+        delay(1000000);
+        schedule();
+    }
+}
+void GG123() {
+    int a[100];
+
+    memset(a, '\n', 100);
+    for(int i = 0 ; i < 100; i++)
+        uart_send(a[i]);
+}
+
 void main(char* fdt)
 {
     uart_init();
     mm_init(fdt);
     timer_init();
     sched_init();
+
+    for (int i = 0; i < 5; i++) {
+        kthread_create(&foo, "foo");    
+    }
+
+    printf("");
+    exec_program("syscall.img");
     
-    kthread_create(&shell, NULL);
+    // kthread_create(&shell, NULL);
     enable_interrupt();
     idle();
 }

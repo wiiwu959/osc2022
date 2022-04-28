@@ -167,7 +167,7 @@ void shell(void)
     // exec_program("userprog2");
     while (1) {
         // TODO: Find out WTF happenning to this shit
-        enable_interrupt();
+        // enable_interrupt();
         uart_send_string("# ");
 
         uart_recvline(buf);

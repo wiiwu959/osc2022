@@ -14,9 +14,9 @@ void sys_uartread(struct trap_frame* regs)
 {
     char* buf = regs->regs[0];
     size_t size = regs->regs[1];
-    size_t flags = disable_irq_save();
+    // size_t flags = disable_irq_save();
     uart_recvn(buf, size);
-    irq_restore(flags);
+    // irq_restore(flags);
     regs->regs[0] = size;
 }
 
@@ -32,7 +32,8 @@ void sys_uartwrite(struct trap_frame* regs)
 void sys_exec(struct trap_frame* regs)
 {
     char* name = regs->regs[0];
-    exec_program(name);
+    char** arg = regs->regs[1];
+    exec_user(regs);
     regs->regs[0] = 0;
 }
 
