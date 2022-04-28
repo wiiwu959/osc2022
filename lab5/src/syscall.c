@@ -7,6 +7,7 @@
 
 void sys_getpid(struct trap_frame* regs)
 {
+    printf("sys_getpid\n");
     regs->regs[0] = current->pid;
 }
 
@@ -31,6 +32,8 @@ void sys_uartwrite(struct trap_frame* regs)
 // Fuck ?? Maybe not that bad?
 void sys_exec(struct trap_frame* regs)
 {
+    printf("sys_exec\n");
+
     char* name = regs->regs[0];
     char** arg = regs->regs[1];
     exec_user(regs);
@@ -40,24 +43,32 @@ void sys_exec(struct trap_frame* regs)
 // Fuck!
 void sys_fork(struct trap_frame* regs)
 {
+    printf("sys_fork\n");
+
     int pid = kthread_fork(regs);
     regs->regs[0] = pid;
 }
 
 void sys_exit(struct trap_frame* regs)
 {
+    printf("sys_exit\n");
+
     kthread_fin();
 }
 
 void sys_mbox_call(struct trap_frame* regs)
 {
-    unsigned char ch = regs->regs[0];
-    unsigned int* mbox = regs->regs[1];
-    mailbox_call(ch, mbox);
+    printf("sys_mbox_call\n");
+
+    unsigned char ch = (unsigned char)regs->regs[0];
+    unsigned int* mbox = (unsigned int*)regs->regs[1];
+    regs->regs[0] = mailbox_call(ch, mbox);
 }
 
 void sys_kill(struct trap_frame* regs)
 {
+    printf("sys_kill\n");
+
     int pid = regs->regs[0];
     sched_kill_task(pid);
 }

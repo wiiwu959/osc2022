@@ -4,6 +4,7 @@
 #include <exception.h>
 #include <sched.h>
 #include <printf.h>
+#include <exec.h>
 
 
 void idle()
@@ -44,7 +45,7 @@ void main(char* fdt)
     printf("");
     exec_program("syscall.img");
     
-    // kthread_create(&shell, NULL);
     enable_interrupt();
+    // kthread_create(&shell, NULL);
     idle();
 }

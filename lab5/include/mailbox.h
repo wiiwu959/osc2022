@@ -19,7 +19,7 @@ struct arm_memory
     unsigned int size;
 };
 
-void mailbox_call(unsigned char ch, unsigned int *mbox);
+int mailbox_call(unsigned char ch, unsigned int *mbox);
 unsigned int get_board_revision(void);
 struct arm_memory get_arm_memory(void);
 

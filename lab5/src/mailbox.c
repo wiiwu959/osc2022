@@ -13,7 +13,7 @@
 
 volatile unsigned int __attribute__((aligned(16))) mailbox[16];
 
-void mailbox_call(unsigned char ch, unsigned int *mbox)
+int mailbox_call(unsigned char ch, unsigned int *mbox)
 {
     // Combine the message address (upper 28 bits) with channel number (lower 4 bits)
     unsigned int r = (((unsigned int)((unsigned long)mbox) & ~0xF) | (ch & 0xF));
@@ -28,11 +28,9 @@ void mailbox_call(unsigned char ch, unsigned int *mbox)
         // If not, then you can read from Mailbox 0 Read/Write register.
         while (get(MAILBOX_STATUS) & MAILBOX_EMPTY) {}
         // Check if the value is the same as you wrote in step 1.
-        if (get(MAILBOX_READ) == r) {
-            return;
-        }
+        return get(MAILBOX_READ) == r;
     }
-    return;
+    return 0;
 }
 
 // https://github.com/raspberrypi/firmware/wiki/Mailbox-property-interface
