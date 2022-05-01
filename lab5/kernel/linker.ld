@@ -27,6 +27,6 @@ SECTIONS
   _ebss = .;
   _end = .;
   
-  . = 0x100000;
+  . = 0x400000;
   _estack = .;
 }

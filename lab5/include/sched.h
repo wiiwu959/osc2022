@@ -9,6 +9,8 @@
 
 #define DEFAULT_TIMEOUT 15
 
+#define STACK_SIZE 0x2000
+
 #define current get_current()
 
 struct cpu_context {

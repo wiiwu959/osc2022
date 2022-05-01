@@ -137,12 +137,12 @@ void kthread_create(unsigned long fn, unsigned long arg)
     struct task_struct* ts = sched_new_task();
 
     ts->preempt_count = 1;
-    ts->kernel_stack = kmalloc(PAGE_SIZE);
+    ts->kernel_stack = kmalloc(STACK_SIZE);
 
 	ts->cpu_context.x19 = (unsigned long)fn;
 	ts->cpu_context.x20 = arg;
 	ts->cpu_context.pc = (unsigned long)kthread_func_wrapper;
-	ts->cpu_context.sp = ts->kernel_stack + PAGE_SIZE - sizeof(struct cpu_context);
+	ts->cpu_context.sp = ts->kernel_stack + STACK_SIZE - sizeof(struct cpu_context);
 
     sched_add_task(ts);
 }
@@ -157,6 +157,7 @@ void kthread_kill_zombies()
 {
     while (!list_empty(&dead_queue)) {
         struct task_struct *dead = list_first_entry(&dead_queue, struct task_struct, list);
+        list_del(&dead->list);
         // if (dead->kernel_stack) {
         //     kfree(dead->kernel_stack);
         //     kfree(dead->user_stack);
@@ -168,7 +169,6 @@ void kthread_kill_zombies()
 
 int kthread_fork(struct trap_frame* regs) 
 {
-    size_t flags = disable_irq_save();
 
     struct task_struct* child = sched_new_task();
 
@@ -178,11 +178,11 @@ int kthread_fork(struct trap_frame* regs)
     child->state = current->state;
     child->counter = 0;
 
-    child->kernel_stack = kmalloc(PAGE_SIZE);
-    child->user_stack = kmalloc(PAGE_SIZE);
+    child->kernel_stack = kmalloc(STACK_SIZE);
+    child->user_stack = kmalloc(STACK_SIZE);
 
-    // memcpy(child->kernel_stack, current->kernel_stack, PAGE_SIZE);
-    memcpy(child->user_stack, current->user_stack, PAGE_SIZE);
+    // memcpy(child->kernel_stack, current->kernel_stack, STACK_SIZE);
+    memcpy(child->user_stack, current->user_stack, STACK_SIZE);
 
     child->data = current->data;
     // child->data = kmalloc(current->data_size);
@@ -192,7 +192,7 @@ int kthread_fork(struct trap_frame* regs)
 
     memcpy(&child->cpu_context, &current->cpu_context, sizeof(struct cpu_context));
     
-    struct trap_frame* child_frame = (size_t)child->kernel_stack + PAGE_SIZE - sizeof(struct trap_frame);
+    struct trap_frame* child_frame = (struct trap_frame*)((size_t)child->kernel_stack + STACK_SIZE - sizeof(struct trap_frame));
     memcpy(child_frame, regs, sizeof(struct trap_frame));
     
     // child_frame->sp = (size_t)child->user_stack + (regs->sp - (size_t)current->user_stack);
@@ -207,6 +207,7 @@ int kthread_fork(struct trap_frame* regs)
     child->cpu_context.pc = restore_regs_eret;
 
 
+    size_t flags = disable_irq_save();
     sched_add_task(child);
     irq_restore(flags);
     return child->pid;

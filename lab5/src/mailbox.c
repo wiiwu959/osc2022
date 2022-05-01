@@ -11,7 +11,7 @@
 #define TAG_REQUEST_CODE    0x00000000
 #define END_TAG             0x00000000
 
-volatile unsigned int __attribute__((aligned(16))) mailbox[16];
+volatile unsigned int __attribute__((aligned(16))) mailbox[36];
 
 int mailbox_call(unsigned char ch, unsigned int *mbox)
 {
@@ -23,14 +23,11 @@ int mailbox_call(unsigned char ch, unsigned int *mbox)
     while (get(MAILBOX_STATUS) & MAILBOX_FULL) {}
     put(MAILBOX_WRITE, r);
     
-    while (1) {
-        // Check if Mailbox 0 status register’s empty flag is set.
-        // If not, then you can read from Mailbox 0 Read/Write register.
-        while (get(MAILBOX_STATUS) & MAILBOX_EMPTY) {}
-        // Check if the value is the same as you wrote in step 1.
-        return get(MAILBOX_READ) == r;
-    }
-    return 0;
+    // Check if Mailbox 0 status register’s empty flag is set.
+    // If not, then you can read from Mailbox 0 Read/Write register.
+    while (get(MAILBOX_STATUS) & MAILBOX_EMPTY) {}
+    // Check if the value is the same as you wrote in step 1.
+    return get(MAILBOX_READ) == r;
 }
 
 // https://github.com/raspberrypi/firmware/wiki/Mailbox-property-interface

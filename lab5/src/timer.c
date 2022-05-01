@@ -34,11 +34,10 @@ void core_timer_handler()
     asm volatile("mrs %0, cntfrq_el0" : "=r" (frq));
 
     unsigned long seconds = pct / frq;
-    printf("Seconds after booting: %d\r\n", seconds);
+    // printf("Seconds after booting: %d\r\n", seconds);
     // asm volatile("msr cntp_tval_el0, %0" :: "r" (frq * 2));
-    asm volatile("msr cntp_tval_el0, %0" :: "r" (frq >> 5));
-
-
+    // asm volatile("msr cntp_tval_el0, %0" :: "r" (frq >> 5));
+    asm volatile("msr cntp_tval_el0, %0" :: "r" (0x1000));
     return;
 }
 
@@ -51,7 +50,7 @@ void each_timer_handler()
     unsigned long seconds = pct / frq;
     
     asm volatile("msr cntp_tval_el0, %0" :: "r" (0x1000));
-    // asm volatile("msr cntp_tval_el0, %0" :: "r" (frq));
+    // asm volatile("msr cntp_tval_el0, %0" :: "r" (frq >> 5));
     
     // handle timer event, check if the earliest timer timeout or not
     if (time_event_head) {
@@ -85,6 +84,10 @@ void timer_init()
 {
     core_timer_enable();
     time_event_head = NULL;
+    uint64_t tmp;
+    asm volatile("mrs %0, cntkctl_el1" : "=r"(tmp));
+    tmp |= 1;
+    asm volatile("msr cntkctl_el1, %0" : : "r"(tmp));
 }
 
 void timer_add(void (*callback)(char*), int sec, char* msg)

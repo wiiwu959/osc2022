@@ -114,7 +114,7 @@ struct file_info *cpio_get_file(char *getfile) {
             ptr += namesize + name_align;
             char *load_addr = kmalloc(filesize);
             memcpy(load_addr, (char *)ptr, filesize);
-            struct file_info* fi;
+            struct file_info* fi = kmalloc(sizeof(struct file_info));
             fi->data = load_addr;
             fi->data_size = filesize;
             return fi;

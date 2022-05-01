@@ -5,6 +5,7 @@
 #include <sched.h>
 #include <printf.h>
 #include <exec.h>
+#include <allocator.h>
 
 
 void idle()
@@ -22,13 +23,6 @@ void foo()
         delay(1000000);
         schedule();
     }
-}
-void GG123() {
-    int a[100];
-
-    memset(a, '\n', 100);
-    for(int i = 0 ; i < 100; i++)
-        uart_send(a[i]);
 }
 
 void main(char* fdt)

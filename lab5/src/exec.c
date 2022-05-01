@@ -13,7 +13,7 @@ void exec_user_program()
         "msr sp_el0, %1 \n\t"
         "eret \n\t"
         ::  "r" (current->data),
-            "r" (current->user_stack + PAGE_SIZE - sizeof(struct cpu_context))
+            "r" (current->user_stack + STACK_SIZE)
     );
 }
 
@@ -27,21 +27,20 @@ void exec_program(char* filename)
     }
 
     struct task_struct* ts = sched_new_task();
-    ts->kernel_stack = kmalloc(PAGE_SIZE);
-    ts->user_stack = kmalloc(PAGE_SIZE);
+    ts->kernel_stack = kmalloc(STACK_SIZE);
+    ts->user_stack = kmalloc(STACK_SIZE);
 
-    ts->cpu_context.sp = ts->kernel_stack + PAGE_SIZE - sizeof(struct cpu_context);
+    ts->cpu_context.sp = ts->kernel_stack + STACK_SIZE;
     ts->cpu_context.pc = exec_user_program;
     ts->data = fi->data;
     ts->data_size = fi->data_size;
 
-    // free(fi);
+    kfree(fi);
 
     sched_add_task(ts);
     return;
 }
-#include <sched.h>
-#include <syscall.h>
+
 // int exec_user(const char *name, char *const argv[])
 int exec_user(struct trap_frame* regs)
 {
@@ -57,8 +56,12 @@ int exec_user(struct trap_frame* regs)
 
     current->pid = sched_newpid();
 
-    regs->regs[30] = fi->data;
-    regs->sp = current->user_stack + PAGE_SIZE - sizeof(struct trap_frame);
+    // regs->regs[30] = fi->data;
+    // regs->regs[30] = current->data;
+    regs->pc = fi->data;
+    regs->sp = current->user_stack + STACK_SIZE;
+
+    kfree(fi);
 
     irq_restore(flags);
     preempt_enable();

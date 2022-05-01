@@ -29,46 +29,33 @@ void sys_uartwrite(struct trap_frame* regs)
     regs->regs[0] = size;
 }
 
-// Fuck ?? Maybe not that bad?
 void sys_exec(struct trap_frame* regs)
 {
-    printf("sys_exec\n");
-
-    char* name = regs->regs[0];
-    char** arg = regs->regs[1];
     exec_user(regs);
     regs->regs[0] = 0;
 }
 
-// Fuck!
 void sys_fork(struct trap_frame* regs)
 {
-    printf("sys_fork\n");
-
     int pid = kthread_fork(regs);
     regs->regs[0] = pid;
 }
 
 void sys_exit(struct trap_frame* regs)
 {
-    printf("sys_exit\n");
-
     kthread_fin();
 }
 
 void sys_mbox_call(struct trap_frame* regs)
 {
-    printf("sys_mbox_call\n");
-
-    unsigned char ch = (unsigned char)regs->regs[0];
-    unsigned int* mbox = (unsigned int*)regs->regs[1];
+    unsigned char ch = regs->regs[0];
+    unsigned int* mbox;
+    mbox = regs->regs[1];
     regs->regs[0] = mailbox_call(ch, mbox);
 }
 
 void sys_kill(struct trap_frame* regs)
 {
-    printf("sys_kill\n");
-
     int pid = regs->regs[0];
     sched_kill_task(pid);
 }
@@ -76,9 +63,6 @@ void sys_kill(struct trap_frame* regs)
 void sys_test(struct trap_frame* regs)
 {
     printf("[*] Testing syscall 8\r\n");
-    // printf("elr_el1\t%x\r\n", regs->elr_el1);
-    // printf("sp_el0\t%x\r\n", regs->sp_el0);
-    // printf("spsr_el1\t%x\r\n", regs->spsr_el1);
 }
 
 typedef void *(*func)(struct trap_frame*);
@@ -94,6 +78,7 @@ func syscall_table[] = {
     (func) sys_test
 };
 
+#include <exception.h>
 void syscall_handler(struct trap_frame* regs)
 {
     unsigned nr = regs->regs[8]; // syscall number
@@ -102,5 +87,7 @@ void syscall_handler(struct trap_frame* regs)
         return;
     }
     // printf("nr = %d\n",nr);
+    // enable_interrupt();
     (syscall_table[nr])(regs);
+    // disable_interrupt();
 }
