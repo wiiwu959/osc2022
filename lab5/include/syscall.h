@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#define __NR_syscalls   9
+#define __NR_syscalls   12
 
 #define SYS_GETPID      0 		// syscall numbers 
 #define SYS_UARTREAD    1 	
@@ -12,8 +12,11 @@
 #define SYS_FORK        4
 #define SYS_EXIT        5
 #define SYS_MBOX_CALL   6
-#define KILL            7
-#define TEST            8
+#define SYS_KILL        7
+#define SYS_SIGNAL      8
+#define SYS_SIGKILL     9
+#define SYS_SIGRETURN   10
+#define TEST            11
 
 struct trap_frame {
     unsigned long regs[31];
@@ -45,5 +48,12 @@ void sys_mbox_call(struct trap_frame* regs);
 void sys_kill(struct trap_frame* regs);
 // void sys_test();
 void sys_test(struct trap_frame* regs);
+
+// signal
+// void sys_signal(int SIGNAL, void (*handler)())
+void sys_signal(struct trap_frame* regs);
+// void sys_sigkill(int pid, int SIGNAL)
+void sys_sigkill(struct trap_frame* regs);
+void sys_sigreturn(struct trap_frame* regs);
 
 #endif  /*_SYS_H */

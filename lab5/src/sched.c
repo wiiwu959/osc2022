@@ -70,6 +70,9 @@ struct task_struct* sched_new_task()
     ts->preempt_count = 0;
     ts->counter = 0;
 
+    INIT_LIST_HEAD(&ts->sig_info);
+    ts->sig_context = NULL;
+
     return ts;
 }
 
@@ -110,7 +113,18 @@ void sched_kill_task(int id)
     return;
 }
 
-static struct task_struct *sched_next_task() {
+struct task_struct *sched_get_task(int pid)
+{
+    struct task_struct* ts;
+    list_for_each_entry(ts, &task_queue, list) {
+        if (ts->pid == pid) {
+            return ts;
+        }
+    }
+    return NULL;
+}
+
+struct task_struct *sched_next_task() {
     struct task_struct *ts = list_first_entry(&task_queue, struct task_struct, list);
 
     list_del(&ts->list);
@@ -142,7 +156,8 @@ void kthread_create(unsigned long fn, unsigned long arg)
 	ts->cpu_context.x19 = (unsigned long)fn;
 	ts->cpu_context.x20 = arg;
 	ts->cpu_context.pc = (unsigned long)kthread_func_wrapper;
-	ts->cpu_context.sp = ts->kernel_stack + STACK_SIZE - sizeof(struct cpu_context);
+    // need to align 16 or else it will die
+	ts->cpu_context.sp = ts->kernel_stack + STACK_SIZE - sizeof(struct cpu_context) - 8;
 
     sched_add_task(ts);
 }
@@ -172,30 +187,21 @@ int kthread_fork(struct trap_frame* regs)
 
     struct task_struct* child = sched_new_task();
 
-    // *child = *current;
-
     child->preempt_count = 0;
     child->state = current->state;
     child->counter = 0;
 
     child->kernel_stack = kmalloc(STACK_SIZE);
     child->user_stack = kmalloc(STACK_SIZE);
-
-    // memcpy(child->kernel_stack, current->kernel_stack, STACK_SIZE);
     memcpy(child->user_stack, current->user_stack, STACK_SIZE);
 
     child->data = current->data;
-    // child->data = kmalloc(current->data_size);
-    // memcpy(child->data, current->data, current->data_size);
-    // child->data_size = current->data_size;
-    
 
     memcpy(&child->cpu_context, &current->cpu_context, sizeof(struct cpu_context));
     
     struct trap_frame* child_frame = (struct trap_frame*)((size_t)child->kernel_stack + STACK_SIZE - sizeof(struct trap_frame));
     memcpy(child_frame, regs, sizeof(struct trap_frame));
     
-    // child_frame->sp = (size_t)child->user_stack + (regs->sp - (size_t)current->user_stack);
     child_frame->sp = (size_t)child->user_stack + (regs->sp - (size_t)current->user_stack);
     child_frame->regs[0] = 0;
 

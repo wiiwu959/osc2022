@@ -17,6 +17,7 @@ void exec_user_program()
     );
 }
 
+// exec user program from kernel
 void exec_program(char* filename)
 {
     struct file_info* fi = cpio_get_file(filename);
@@ -41,6 +42,8 @@ void exec_program(char* filename)
     return;
 }
 
+// TODO: exec parameter not handle yet
+// exec use in user mode
 // int exec_user(const char *name, char *const argv[])
 int exec_user(struct trap_frame* regs)
 {
@@ -56,8 +59,7 @@ int exec_user(struct trap_frame* regs)
 
     current->pid = sched_newpid();
 
-    // regs->regs[30] = fi->data;
-    // regs->regs[30] = current->data;
+    // regs->regs[30] = ?? (set return)
     regs->pc = fi->data;
     regs->sp = current->user_stack + STACK_SIZE;
 

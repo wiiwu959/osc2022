@@ -19,7 +19,7 @@ void idle()
 void foo()
 {
     for(int i = 0; i < 10; ++i) {
-        printf("Thread id: %d %d\n", current->pid, i);
+        printf("Thread id: %d %d\r\n", current->pid, i);
         delay(1000000);
         schedule();
     }

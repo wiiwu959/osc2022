@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 #include <list.h>
+#include <syscall.h>
+#include <signal.h>
 
 #define TASK_RUNNING    0
 #define TASK_DEAD       1
@@ -41,12 +43,14 @@ struct task_struct {
     void* data;
     int data_size;
 
+    struct signal_context *sig_context;
+    
+    struct list_head sig_info;
     struct list_head list;
 };
 
 void preempt_enable();
 void preempt_disable();
-
 
 void schedule();
 void sched_init();
@@ -55,13 +59,15 @@ struct task_struct* sched_new_task();
 void sched_add_task(struct task_struct* ts);
 void sched_del_task(struct task_struct* ts);
 void sched_kill_task(int id);
-static struct task_struct *sched_next_task();
+struct task_struct *sched_get_task(int pid);
+struct task_struct *sched_next_task();
 void sched_timer_tick();
 
 // kthread
 void kthread_create(unsigned long fn, unsigned long arg);
 void kthread_fin();
 void kthread_kill_zombies();
+int kthread_fork(struct trap_frame* regs);
 
 // asm
 void switch_to(struct task_struct* prev, struct task_struct* next);
@@ -69,6 +75,7 @@ void set_current(struct task_struct *ts);
 struct task_struct* get_current();
 void kthread_func_wrapper(void);
 void restore_regs_eret(void);
+void call_sigreturn();
 
 
 
