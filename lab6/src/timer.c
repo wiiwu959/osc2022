@@ -4,6 +4,7 @@
 #include <allocator.h>
 #include <util.h>
 #include <sched.h>
+#include <mini_uart.h>
 
 time_event *time_event_head;
 
@@ -17,12 +18,12 @@ void core_timer_enable()
     unsigned long frq;
     asm volatile("mrs %0, cntfrq_el0" : "=r" (frq));
     asm volatile("msr cntp_tval_el0, %0" :: "r" (frq * 2));
-    put(CORE0_TIMER_IRQ_CTRL, 2);
+    put(CORE0_TIMERS_ITR_CON, 2);
 }
 
 void core_timer_disable()
 {
-    put(CORE0_TIMER_IRQ_CTRL, 2);
+    put(CORE0_TIMERS_ITR_CON, 2);
 }
 
 

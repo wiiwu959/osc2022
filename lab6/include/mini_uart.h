@@ -1,7 +1,9 @@
 #ifndef	_MINI_UART_H
 #define	_MINI_UART_H
 
-#define MMIO_BASE 0x3f000000
+#include <mmu.h>
+
+#define MMIO_BASE (PHYS_OFFSET + 0x3f000000)
 
 // ref: https://cs140e.sergio.bz/docs/BCM2837-ARM-Peripherals.pdf p.8
 #define AUX_IRQ                 (MMIO_BASE+0x00215000)
@@ -40,8 +42,8 @@
 #define GPPUDCLK0               (MMIO_BASE+0x00200098)
 #define GPPUDCLK1               (MMIO_BASE+0x0020009C)
 
-#define CORE0_TIMERS_ITR_CON    0x40000040
-#define CORE0_IRQ_SRC           0x40000060
+#define CORE0_TIMERS_ITR_CON    (PHYS_OFFSET + 0x40000040)
+#define CORE0_IRQ_SRC           (PHYS_OFFSET + 0x40000060)
 
 #define IRQ_PENDING_1           (MMIO_BASE+0x0000B204)
 #define ENABLE_IRQs1            (MMIO_BASE+0x0000B210)

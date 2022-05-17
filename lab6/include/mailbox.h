@@ -1,7 +1,9 @@
 #ifndef _MAILBOX_H
 #define _MAILBOX_H
 
-#define MMIO_BASE       0x3f000000
+#include <mmu.h>
+#include <mini_uart.h>
+
 #define MAILBOX_BASE    MMIO_BASE + 0xb880
 
 #define MAILBOX_READ    MAILBOX_BASE

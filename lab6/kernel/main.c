@@ -32,14 +32,14 @@ void main(char* fdt)
     timer_init();
     sched_init();
 
-    for (int i = 0; i < 5; i++) {
-        kthread_create(&foo, "foo");    
-    }
+    // for (int i = 0; i < 5; i++) {
+    //     kthread_create(&foo, "foo");    
+    // }
 
-    printf("");
-    exec_program("syscall.img");
+    // printf("");
+    // exec_program("syscall.img");
     
     enable_interrupt();
-    // kthread_create(&shell, NULL);
+    kthread_create(&shell, NULL);
     idle();
 }

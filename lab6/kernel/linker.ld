@@ -1,6 +1,6 @@
 SECTIONS
 {
-  . = 0x80000;
+  . = 0xffff000000080000;
 
   _stext = .;
   .text : 
@@ -27,6 +27,6 @@ SECTIONS
   _ebss = .;
   _end = .;
   
-  . = 0x400000;
+  . = 0xffff000000400000;
   _estack = .;
 }

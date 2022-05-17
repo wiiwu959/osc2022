@@ -7,6 +7,7 @@
 #include <printf.h>
 #include <mini_uart.h>
 #include <cpio.h>
+#include <mmu.h>
 
 // #define DEBUG
 
@@ -44,9 +45,10 @@ void memory_reserve(void* from, void* to)
 void mm_init(char* fdt)
 {
     initramfs_init(fdt);
-    page_base = (uint64_t)0;
+    page_base = (uint64_t)physical_to_virtual(0);
+
     // TODO: find it in dtb
-    page_end = (uint64_t)0x3c000000;
+    page_end = (uint64_t)physical_to_virtual(0x3c000000);
 
     page_total = (page_end - page_base) / PAGE_SIZE;
     frame_array = simple_malloc(sizeof(page_head) * page_total);
@@ -56,17 +58,21 @@ void mm_init(char* fdt)
         frame_array[i].status = FREE_PAGE;
     }
 
-    //Spin tables for multicore boot
-    memory_reserve((void*)0, (void*)0x1000); 
+    // PGD and PUD memory reserve
+    memory_reserve((uintptr_t)PGD_PAGE_FRAME, (uintptr_t)PGD_PAGE_FRAME + PAGE_SIZE);
+    memory_reserve((uintptr_t)PUD_PAGE_FRAME, (uintptr_t)PUD_PAGE_FRAME + PAGE_SIZE);
+
+    // Spin tables for multicore boot
+    memory_reserve((void*)physical_to_virtual(0), (void*)physical_to_virtual(0x1000));
     
     // Kernel image in the physical memory
-    memory_reserve((void*)0x80000, (void*)0x400000); 
+    memory_reserve((void*)physical_to_virtual(0x80000), (void*)physical_to_virtual(0x400000)); 
 
     // Initramfs
-    memory_reserve((uintptr_t)initramfs_loc, (uintptr_t)initramfs_end);
+    memory_reserve((uintptr_t)physical_to_virtual(initramfs_loc), (uintptr_t)physical_to_virtual(initramfs_end));
 
     // Devicetree
-    memory_reserve((uintptr_t)fdt, fdt_end);
+    memory_reserve((uintptr_t)physical_to_virtual(fdt), physical_to_virtual(fdt_end));
 
     // simple simple_allocator
     memory_reserve((uintptr_t)MEM_HEAD, (uintptr_t)MEM_TAIL);

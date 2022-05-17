@@ -1,5 +1,8 @@
 .section ".text.startup"
 .global _start
+
+#define P2V(p) (p - 0xffff000000000000)
+
 _start: 
     mrs x10, mpidr_el1
     and x10, x10, #0xFF           // Check processor id
@@ -13,8 +16,11 @@ set_exception_vector_table:
     ldr x10, =exception_vector_table
     msr vbar_el1, x10
 
-    ldr x10, =_sbss
-    ldr x11, =_ebss
+set_mmu:
+    bl  mmu_init
+
+    ldr x10, =P2V(_sbss)
+    ldr x11, =P2V(_ebss)
     sub x11, x11, x10             // x11 = bss segment
 
 memzero:
@@ -22,7 +28,7 @@ memzero:
     subs x11, x11, #8             // x11 = x11 - 8
     bgt memzero                   // compare cpsr register
 
-    ldr x10, =_estack             // place stack pointer
+    ldr x10, =P2V(_estack)        // place stack pointer
     mov sp, x10 
 
     mov x0, x20                   // Get fdt adr back

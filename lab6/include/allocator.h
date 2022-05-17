@@ -5,8 +5,8 @@
 #include <list.h>
 #include <stdint.h>
 
-#define MEM_HEAD (char*)0x9000000
-#define MEM_TAIL (char*)0x9ffffff
+#define MEM_HEAD (char*)(PHYS_OFFSET + 0x9000000)
+#define MEM_TAIL (char*)(PHYS_OFFSET + 0x9ffffff)
 
 void* simple_malloc(size_t size);
 
