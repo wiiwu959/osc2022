@@ -44,7 +44,7 @@ void memory_reserve(void* from, void* to)
 
 void mm_init(char* fdt)
 {
-    initramfs_init(fdt);
+    initramfs_init(physical_to_virtual(fdt));
     page_base = (uint64_t)physical_to_virtual(0);
 
     // TODO: find it in dtb
@@ -59,8 +59,8 @@ void mm_init(char* fdt)
     }
 
     // PGD and PUD memory reserve
-    memory_reserve((uintptr_t)PGD_PAGE_FRAME, (uintptr_t)PGD_PAGE_FRAME + PAGE_SIZE);
-    memory_reserve((uintptr_t)PUD_PAGE_FRAME, (uintptr_t)PUD_PAGE_FRAME + PAGE_SIZE);
+    memory_reserve((uintptr_t)physical_to_virtual(PGD_PAGE_FRAME), (uintptr_t)physical_to_virtual(PGD_PAGE_FRAME + PAGE_SIZE));
+    memory_reserve((uintptr_t)physical_to_virtual(PUD_PAGE_FRAME), (uintptr_t)physical_to_virtual(PUD_PAGE_FRAME + PAGE_SIZE));
 
     // Spin tables for multicore boot
     memory_reserve((void*)physical_to_virtual(0), (void*)physical_to_virtual(0x1000));
@@ -69,7 +69,7 @@ void mm_init(char* fdt)
     memory_reserve((void*)physical_to_virtual(0x80000), (void*)physical_to_virtual(0x400000)); 
 
     // Initramfs
-    memory_reserve((uintptr_t)physical_to_virtual(initramfs_loc), (uintptr_t)physical_to_virtual(initramfs_end));
+    memory_reserve((uintptr_t)initramfs_loc, (uintptr_t)initramfs_end);
 
     // Devicetree
     memory_reserve((uintptr_t)physical_to_virtual(fdt), physical_to_virtual(fdt_end));

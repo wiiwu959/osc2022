@@ -6,6 +6,7 @@
 #include <printf.h>
 #include <exec.h>
 #include <allocator.h>
+#include <mmu.h>
 
 
 void idle()
@@ -25,7 +26,6 @@ void foo()
     }
 }
 
-#include <mmu.h>
 void main(char* fdt)
 {
     uart_init();
@@ -44,6 +44,6 @@ void main(char* fdt)
     // exec_program("syscall.img");
     
     enable_interrupt();
-    kthread_create(&shell, NULL);
+    shell();
     idle();
 }

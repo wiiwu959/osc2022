@@ -66,10 +66,10 @@ void kernel_space_mapping()
 
 void* physical_to_virtual(unsigned long long physical)
 {
-    return (void*)(physical + PHYS_OFFSET);
+    return (void*)(physical | 0xffff000000000000);
 }
 
 void* virtual_to_physical(unsigned long long virtual)
 {
-    return (void*)(virtual - PHYS_OFFSET);
+    return (void*)(virtual & 0x0000ffffffffffff);
 }

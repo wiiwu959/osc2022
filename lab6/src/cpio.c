@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <allocator.h>
 #include <fdt.h>
+#include <mmu.h>
 
 unsigned int cpio_read_8hex(char* num)
 {
@@ -150,13 +151,13 @@ void initramfs_callback(char* fdt, char* node)
         cur += sizeof(struct fdt_prop);
         if (!strcmp(prop_name, "linux,initrd-start")) {
             uart_send_string("[*] cpio archive file loaded at: ");
-            initramfs_loc = fdt_get_uint32(cur);
+            initramfs_loc = physical_to_virtual(fdt_get_uint32(cur));
             uart_send_hex(initramfs_loc);
             uart_send_string("\r\n");
         } else if (!strcmp(prop_name, "linux,initrd-end")) {
-            initramfs_end = fdt_get_uint32(cur);
+            initramfs_end = physical_to_virtual(fdt_get_uint32(cur));
         } else if (!strcmp(prop_name, "reg")) {
-            memory_end = fdt_get_uint64(cur);
+            memory_end = physical_to_virtual(fdt_get_uint64(cur));
         }
         cur += fdt_alignup(prop_len, 4);
     }
