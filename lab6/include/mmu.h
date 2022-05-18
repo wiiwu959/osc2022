@@ -1,9 +1,8 @@
 #ifndef _MMU_H
 #define _MMU_H
 
-#define PGD_PAGE_FRAME 0x0
-#define PUD_PAGE_FRAME 0x1000
-#define PMD_PAGE_FRAME 0x2000
+#define PGD_PAGE_FRAME 0x1000
+#define PUD_PAGE_FRAME 0x2000
 
 #define PHYS_OFFSET 0xffff000000000000
 
@@ -24,17 +23,7 @@
 #define PD_BLOCK 0b01
 #define PD_ACCESS (1 << 10)
 #define BOOT_PGD_ATTR PD_TABLE
-// Block descriptor for device memory
 #define BOOT_PUD_ATTR (PD_ACCESS | (MAIR_IDX_DEVICE_nGnRnE << 2) | PD_BLOCK)
-
-/////////////////////////////////////////////////////////////////////////////////
-// Block descriptor for normal memory
-#define BOOT_PD_BLOCK_NORMAL (PD_ACCESS | (MAIR_NORMAL_NOCACHE << 2) | PD_BLOCK)
-
-// Addrees from 3F00_0000 to 3FFF_FFFF is used for Pheripherals
-#define LOWER_1G_PERIF_START 0x3F000000
-/////////////////////////////////////////////////////////////////////////////////
-
 
 void mmu_init();
 

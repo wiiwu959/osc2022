@@ -1,4 +1,5 @@
 #include <mmu.h>
+#include <allocator.h>
 
 void mmu_init()
 {
@@ -31,6 +32,36 @@ void mmu_init()
         "orr x2 , x2, 1\r\n"
         "msr sctlr_el1, x2\r\n"
     );
+
+}
+
+
+void kernel_space_mapping()
+{
+    // 2MB block mapping
+    unsigned long *p1 = kmalloc(PAGE_SIZE);
+    
+    // 0x00000000 - 0x3f200000
+    for (int i = 0; i < 504; i++) {
+        p1[i] = (i << 21) | PD_ACCESS | (MAIR_IDX_NORMAL_NOCACHE << 2) | PD_BLOCK;
+    }
+    // 0x3f400000 - 0x3fffffff
+    for (int i = 504; i < 512; i++) {
+        p1[i] = (i << 21) | PD_ACCESS | (MAIR_IDX_DEVICE_nGnRnE << 2) | PD_BLOCK;
+    }
+
+    unsigned long *p2 = kmalloc(PAGE_SIZE);
+    // 0x40000000 - 0x7fffffff
+    for (int i = 0; i < 512; i++) {
+        p2[i] = 0x40000000 | (i << 21) | PD_ACCESS | (MAIR_IDX_DEVICE_nGnRnE << 2) | PD_BLOCK;
+    }
+
+    // 1st 2MB mapped by the 1st entry of PUD
+    asm volatile("str %0, [%1]\r\n" :: "r"((unsigned long)virtual_to_physical(p1) | PD_TABLE),
+                                       "r"(physical_to_virtual(PUD_PAGE_FRAME)));
+    // 2nd 2MB mapped by the 2nd entry of PUD
+    asm volatile("str %0, [%1]\r\n" :: "r"((unsigned long)virtual_to_physical(p2) | PD_TABLE),
+                                       "r"(physical_to_virtual(PUD_PAGE_FRAME + 8)));
 }
 
 void* physical_to_virtual(unsigned long long physical)

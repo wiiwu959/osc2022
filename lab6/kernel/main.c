@@ -25,12 +25,16 @@ void foo()
     }
 }
 
+#include <mmu.h>
 void main(char* fdt)
 {
     uart_init();
     mm_init(fdt);
     timer_init();
     sched_init();
+
+    kernel_space_mapping();
+
 
     // for (int i = 0; i < 5; i++) {
     //     kthread_create(&foo, "foo");    

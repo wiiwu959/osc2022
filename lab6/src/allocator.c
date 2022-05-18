@@ -307,4 +307,5 @@ void mem_test() {
     kfree(ptr3);
     kfree(ptr5);
     kfree(ptr6);
+    printf("finished\n");
 }
