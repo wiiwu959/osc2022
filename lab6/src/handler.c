@@ -99,7 +99,8 @@ void lower_el_one_sync_handler(struct trap_frame *regs)
     enable_interrupt();
     unsigned long esr;
     asm volatile("mrs %0, esr_el1": "=r" (esr));
-    if ((esr >> ESR_ELx_EC_SHIFT) == ESR_ELx_EC_SVC64) {
+    unsigned long ec = esr >> ESR_ELx_EC_SHIFT;
+    if (ec == ESR_ELx_EC_SVC64) {
         syscall_handler(regs);
     } else {
         unsigned long spsr, elr;
@@ -108,7 +109,6 @@ void lower_el_one_sync_handler(struct trap_frame *regs)
         printf("spsr_el1\t0x%x\r\n", spsr);
         printf("elr_el1\t\t0x%x\r\n", elr);
         printf("esr_el1\t\t0x%x\r\n\n", esr);
-        unsigned long ec = esr >> 26;
         printf("ec\t\t0x%x\r\n", ec);
         printf("Unknown lower_el_one_sync exception.\n");
         while (1) {}

@@ -3,6 +3,7 @@
 #include <allocator.h>
 #include <printf.h>
 #include <syscall.h>
+#include <mmu.h>
 
 void exec_user_program()
 {
@@ -12,8 +13,8 @@ void exec_user_program()
         "msr elr_el1, %0 \n\t" 
         "msr sp_el0, %1 \n\t"
         "eret \n\t"
-        ::  "r" (current->data),
-            "r" (current->user_stack + STACK_SIZE)
+        ::  "r" (0),
+            "r" (0xffffffffb000 + STACK_SIZE)
     );
 }
 
@@ -38,6 +39,10 @@ void exec_program(char* filename)
 
     kfree(fi);
 
+    map_pages(ts->page_table, 0, ts->data_size, virtual_to_physical(ts->data), PD_USER_RW | PD_USER_X);
+    map_pages(ts->page_table, 0xffffffffb000, STACK_SIZE, virtual_to_physical(ts->user_stack), PD_USER_RW | PD_USER_NX);
+    map_pages(ts->page_table, 0x3c000000, 0x04000000, 0x3c000000, PD_USER_RW | PD_USER_NX);
+
     sched_add_task(ts);
     return;
 }
@@ -47,7 +52,6 @@ void exec_program(char* filename)
 // int exec_user(const char *name, char *const argv[])
 int exec_user(struct trap_frame* regs)
 {
-
     size_t flags = disable_irq_save();
     preempt_disable();
 
@@ -55,15 +59,27 @@ int exec_user(struct trap_frame* regs)
     char** arg = regs->regs[1];
 
     struct file_info* fi = cpio_get_file(name);
-    struct task_struct *ts = current;
 
     current->pid = sched_newpid();
+    
+    current->data = fi->data;
+    current->data_size = fi->data_size;
+    kfree(fi);
+
+    kfree(current->page_table);
+    current->page_table = kmalloc(PAGE_SIZE);
+    memset(current->page_table, 0, PAGE_SIZE);
+
+    map_pages(current->page_table, 0, current->data_size, virtual_to_physical(current->data), PD_USER_RW | PD_USER_X);
+    map_pages(current->page_table, 0xffffffffb000, STACK_SIZE, virtual_to_physical(current->user_stack), PD_USER_RW | PD_USER_NX);
+    map_pages(current->page_table, 0x3c000000, 0x04000000, 0x3c000000, PD_USER_RW | PD_USER_NX);
+
+    regs->pc = 0;
+    regs->sp = 0xffffffffb000 + PAGE_SIZE * 4;
 
     // regs->regs[30] = ?? (set return)
-    regs->pc = fi->data;
-    regs->sp = current->user_stack + STACK_SIZE;
-
-    kfree(fi);
+    // regs->pc = fi->data;
+    // regs->sp = current->user_stack + STACK_SIZE;
 
     irq_restore(flags);
     preempt_enable();

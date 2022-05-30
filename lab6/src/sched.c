@@ -5,6 +5,7 @@
 #include <mm.h>
 #include <printf.h>
 #include <syscall.h>
+#include <mmu.h>
 
 struct list_head task_queue;
 struct list_head dead_queue;
@@ -62,6 +63,9 @@ struct task_struct* sched_new_task()
     ts = kmalloc(sizeof(struct task_struct));
     memset(ts, 0, sizeof(struct task_struct));
 
+    ts->page_table = kmalloc(PAGE_SIZE);
+    memset(ts->page_table, 0, PAGE_SIZE);
+    
     ts->pid = top_id++;
     ts->kernel_stack = NULL;
     ts->user_stack = NULL;
@@ -157,7 +161,7 @@ void kthread_create(unsigned long fn, unsigned long arg)
 	ts->cpu_context.x20 = arg;
 	ts->cpu_context.pc = (unsigned long)kthread_func_wrapper;
     // need to align 16 or else it will die
-	ts->cpu_context.sp = ts->kernel_stack + STACK_SIZE - sizeof(struct cpu_context) - 8;
+	ts->cpu_context.sp = ts->kernel_stack + STACK_SIZE - sizeof(struct cpu_context) - 12;
 
     sched_add_task(ts);
 }
@@ -184,8 +188,8 @@ void kthread_kill_zombies()
 
 int kthread_fork(struct trap_frame* regs) 
 {
-
     struct task_struct* child = sched_new_task();
+    // struct task_struct* cur = current;
 
     child->preempt_count = 0;
     child->state = current->state;
@@ -194,24 +198,26 @@ int kthread_fork(struct trap_frame* regs)
     child->kernel_stack = kmalloc(STACK_SIZE);
     child->user_stack = kmalloc(STACK_SIZE);
     memcpy(child->user_stack, current->user_stack, STACK_SIZE);
+    memcpy(child->kernel_stack, current->kernel_stack, STACK_SIZE);
 
-    child->data = current->data;
+    // child->data = current->data;
+    child->data = kmalloc(current->data_size);
+    memcpy(child->data, current->data, current->data_size);
+    child->data_size = current->data_size;
 
     memcpy(&child->cpu_context, &current->cpu_context, sizeof(struct cpu_context));
     
     struct trap_frame* child_frame = (struct trap_frame*)((size_t)child->kernel_stack + STACK_SIZE - sizeof(struct trap_frame));
     memcpy(child_frame, regs, sizeof(struct trap_frame));
     
-    child_frame->sp = (size_t)child->user_stack + (regs->sp - (size_t)current->user_stack);
     child_frame->regs[0] = 0;
-
     
-    // child->cpu_context.x19 = restore_regs_eret;
-    // child->cpu_context.x20 = current->cpu_context.x20;
     child->cpu_context.sp = child_frame;
-    // child->cpu_context.pc = ret_from_fork;
     child->cpu_context.pc = restore_regs_eret;
 
+    map_pages(child->page_table, 0, child->data_size, virtual_to_physical(child->data), PD_USER_RW | PD_USER_X);
+    map_pages(child->page_table, 0xffffffffb000, STACK_SIZE, virtual_to_physical(child->user_stack), PD_USER_RW | PD_USER_NX);
+    map_pages(child->page_table, 0x3c000000, 0x04000000, 0x3c000000, PD_USER_RW | PD_USER_NX);
 
     size_t flags = disable_irq_save();
     sched_add_task(child);

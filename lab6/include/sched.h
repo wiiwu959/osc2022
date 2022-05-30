@@ -5,13 +5,15 @@
 #include <list.h>
 #include <syscall.h>
 #include <signal.h>
+#include <stdint.h>
 
 #define TASK_RUNNING    0
 #define TASK_DEAD       1
 
 #define DEFAULT_TIMEOUT 15
 
-#define STACK_SIZE 0x2000
+// four pages
+#define STACK_SIZE (0x1000 * 4)
 
 #define current get_current()
 
@@ -33,6 +35,7 @@ struct cpu_context {
 
 struct task_struct {
     struct cpu_context cpu_context;
+    uint64_t* page_table;
     int pid;
     long state;
     long counter;

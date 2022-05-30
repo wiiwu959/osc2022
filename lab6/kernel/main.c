@@ -41,9 +41,10 @@ void main(char* fdt)
     // }
 
     // printf("");
-    // exec_program("syscall.img");
+    exec_program("vm.img");
     
     enable_interrupt();
-    shell();
+    // shell();
+    // kthread_create(&shell, NULL);
     idle();
 }

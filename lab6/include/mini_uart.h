@@ -56,7 +56,7 @@ void uart_recvline(char* str);
 void uart_send(char c);
 void uart_sendn(char *str, int len);
 void uart_send_string(char* str);
-void uart_send_hex(unsigned int num);
+void uart_send_hex(unsigned long num);
 
 // interrupt buffer
 #define BUFFER_MAX_SIZE 0x100

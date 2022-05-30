@@ -46,12 +46,21 @@ void sys_exit(struct trap_frame* regs)
     kthread_fin();
 }
 
+uint64_t el0_virtual_to_physical(uint64_t virtual)
+{
+    uint64_t entry;
+    asm volatile("at s1e0r, %0\n\t" ::"r"(virtual));
+    asm volatile("mrs %0, par_el1": "=r" (entry));
+    return (uint64_t)(virtual_to_physical((entry & 0xfffffffff000) | (virtual & 0xfff)));
+}
+
 void sys_mbox_call(struct trap_frame* regs)
 {
     unsigned char ch = regs->regs[0];
     unsigned int* mbox;
     mbox = regs->regs[1];
-    regs->regs[0] = mailbox_call(ch, mbox);
+    regs->regs[0] = mailbox_call(ch, el0_virtual_to_physical(mbox));
+
 }
 
 void sys_kill(struct trap_frame* regs)

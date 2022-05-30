@@ -89,10 +89,10 @@ void uart_send_string(char* str)
     }
 }
 
-void uart_send_hex(unsigned int num)
+void uart_send_hex(unsigned long num)
 {
     uart_send_string("0x");
-    for (int i = 28; i >= 0; i -= 4) {
+    for (int i = 60; i >= 0; i -= 4) {
         char b = (char)(0xF & (num >> i));
         if ((int)b < 10) {
             uart_send(b + 48);
