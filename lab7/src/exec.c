@@ -4,6 +4,7 @@
 #include <printf.h>
 #include <syscall.h>
 #include <mmu.h>
+#include <fs/vfs.h>
 
 void exec_user_program()
 {
@@ -21,7 +22,14 @@ void exec_user_program()
 // exec user program from kernel
 void exec_program(char* filename)
 {
-    struct file_info* fi = cpio_get_file(filename);
+    struct file* target = NULL;
+    if(vfs_open(filename, 0, &target) != 0) {
+        printf("[*] exec program failed.\r\n");
+    }
+    struct file_info* fi = kmalloc(sizeof(struct file_info));
+    fi->data_size = target->vnode->v_ops->getsize(target->vnode);
+    fi->data = kmalloc(fi->data_size);
+    vfs_read(target, fi->data, fi->data_size);
 
     if (fi == NULL) {
         printf("[*] exec program failed.\r\n");

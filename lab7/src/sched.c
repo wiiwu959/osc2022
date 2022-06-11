@@ -6,6 +6,7 @@
 #include <printf.h>
 #include <syscall.h>
 #include <mmu.h>
+#include <fs/vfs.h>
 
 struct list_head task_queue;
 struct list_head dead_queue;
@@ -74,6 +75,12 @@ struct task_struct* sched_new_task()
     ts->preempt_count = 0;
     ts->counter = 0;
 
+    ts->cwd = rootfs->root;
+    ts->fd_num = -1;
+    for (int i = 0; i < 16; i++) {
+        ts->fd_table[i] = NULL;
+    }
+
     INIT_LIST_HEAD(&ts->sig_info);
     ts->sig_context = NULL;
 
@@ -98,6 +105,12 @@ void sched_del_task(struct task_struct* ts)
     list_del(&ts->list);
     ts->state = TASK_DEAD;
     list_add_tail(&ts->list, &dead_queue);
+
+    for (int i = 0; i <= ts->fd_num; i++) {
+        if (ts->fd_table[i]->vnode != NULL) {
+            vfs_close(ts->fd_table[i]);
+        }
+    }
 
     irq_restore(flags);
     preempt_enable();

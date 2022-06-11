@@ -7,22 +7,15 @@
 #include <exec.h>
 #include <allocator.h>
 #include <mmu.h>
-
+#include <fs/vfs.h>
+#include <fs/tmpfs.h>
+#include <fs/cpiofs.h>
 
 void idle()
 {
     while (1) {
         schedule();
         kthread_kill_zombies();
-    }
-}
-
-void foo()
-{
-    for(int i = 0; i < 10; ++i) {
-        printf("Thread id: %d %d\r\n", current->pid, i);
-        delay(1000000);
-        schedule();
     }
 }
 
@@ -35,14 +28,17 @@ void main(char* fdt)
 
     kernel_space_mapping();
 
+    // filesystem init
+    vfs_init();
+    register_filesystem(&tmpfs);
+    vfs_mount_rootfs("tmpfs");
 
-    // for (int i = 0; i < 5; i++) {
-    //     kthread_create(&foo, "foo");    
-    // }
+    register_filesystem(&cpiofs);
+    vfs_mkdir("/initramfs");
+    vfs_mount("/initramfs", "cpiofs");
 
-    // printf("");
-    exec_program("vm.img");
-    
+    exec_program("/initramfs/vfs1.img");
+
     enable_interrupt();
     // shell();
     // kthread_create(&shell, NULL);

@@ -21,23 +21,23 @@ $(BUILD_DIR)/%_c.o: %.c
 $(BUILD_DIR)/%_s.o: %.S
 	$(CROSS_COMPILE)gcc $(ASMOPS) -MMD -c $< -o $@
 
-C_FILES := $(wildcard $(SRC_DIR)/*.c)
-ASM_FILES := $(wildcard $(SRC_DIR)/*.S)
-OBJ_FILES := $(C_FILES:%.c=$(BUILD_DIR)/%_c.o)
-OBJ_FILES += $(ASM_FILES:%.S=$(BUILD_DIR)/%_s.o)
+C_FILES := $(shell find "$(SRC_DIR)" -name "*.c")
+ASM_FILES := $(shell find "$(SRC_DIR)" -name "*.S")
+OBJ_FILES := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/$(SRC_DIR)/%_c.o,$(C_FILES))
+OBJ_FILES += $(patsubst $(SRC_DIR)/%.S,$(BUILD_DIR)/$(SRC_DIR)/%_s.o,$(ASM_FILES))
 
 DEP_FILES = $(OBJ_FILES:%.o=%.d)
 -include $(DEP_FILES)
 
-KERNEL_C_FILES := $(wildcard $(KERNEL_DIR)/*.c)
-KERNEL_ASM_FILES := $(wildcard $(KERNEL_DIR)/*.S)
-KERNEL_OBJ_FILES := $(KERNEL_C_FILES:$(KERNEL_DIR)/%.c=$(BUILD_DIR)/$(KERNEL_DIR)/%_c.o)
-KERNEL_OBJ_FILES += $(KERNEL_ASM_FILES:$(KERNEL_DIR)/%.S=$(BUILD_DIR)/$(KERNEL_DIR)/%_s.o)
+KERNEL_C_FILES := $(shell find "$(KERNEL_DIR)" -name "*.c")
+KERNEL_ASM_FILES := $(shell find "$(KERNEL_DIR)" -name "*.S")
+KERNEL_OBJ_FILES := $(patsubst $(KERNEL_DIR)/%.c,$(BUILD_DIR)/$(KERNEL_DIR)/%_c.o,$(KERNEL_C_FILES))
+KERNEL_OBJ_FILES += $(patsubst $(KERNEL_DIR)/%.S,$(BUILD_DIR)/$(KERNEL_DIR)/%_s.o,$(KERNEL_ASM_FILES))
 
-BOOTLOADER_C_FILES := $(wildcard $(BOOTLOADER_DIR)/*.c)
-BOOTLOADER_ASM_FILES := $(wildcard $(BOOTLOADER_DIR)/*.S)
-BOOTLOADER_OBJ_FILES := $(BOOTLOADER_C_FILES:$(BOOTLOADER_DIR)/%.c=$(BUILD_DIR)/$(BOOTLOADER_DIR)/%_c.o)
-BOOTLOADER_OBJ_FILES += $(BOOTLOADER_ASM_FILES:$(BOOTLOADER_DIR)/%.S=$(BUILD_DIR)/$(BOOTLOADER_DIR)/%_s.o)
+BOOTLOADER_C_FILES := $(shell find "$(BOOTLOADER_DIR)" -name "*.c")
+BOOTLOADER_ASM_FILES := $(shell find "$(BOOTLOADER_DIR)" -name "*.S")
+BOOTLOADER_OBJ_FILES := $(patsubst $(BOOTLOADER_DIR)/%.c,$(BUILD_DIR)/$(BOOTLOADER_DIR)/%_c.o,$(BOOTLOADER_C_FILES))
+BOOTLOADER_OBJ_FILES += $(patsubst $(BOOTLOADER_DIR)/%.S,$(BUILD_DIR)/$(BOOTLOADER_DIR)/%_s.o,$(BOOTLOADER_ASM_FILES))
 
 # kernel image
 kernel8.img: $(KERNEL_DIR)/linker.ld $(KERNEL_OBJ_FILES) $(OBJ_FILES)

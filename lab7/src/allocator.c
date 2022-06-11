@@ -200,14 +200,14 @@ void chunk_init()
 void* alloc_chunk(int size)
 {
     int index;
-    if (size <= 0x10) { index = 0; }
-    else if (size <= 0x20) { index = 1; }
-    else if (size <= 0x40) { index = 2; }  
-    else if (size <= 0x80) { index = 3; } 
-    else if (size <= 0x100) { index = 4; } 
-    else if (size <= 0x200) { index = 5; }
-    else if (size <= 0x400) { index = 6; }
-    else if (size <= 0x800) { index = 7; }
+    if (size <= 0x10) { index = 0; size = 0x10; }
+    else if (size <= 0x20) { index = 1; size = 0x20; }
+    else if (size <= 0x40) { index = 2; size = 0x40; }  
+    else if (size <= 0x80) { index = 3; size = 0x80; } 
+    else if (size <= 0x100) { index = 4; size = 0x100; } 
+    else if (size <= 0x200) { index = 5; size = 0x200; }
+    else if (size <= 0x400) { index = 6; size = 0x400; }
+    else if (size <= 0x800) { index = 7; size = 0x800; }
 
     if (list_empty(&chunk_freelist[index])) {
         void* new_page = alloc_page(1);

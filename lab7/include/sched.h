@@ -6,6 +6,7 @@
 #include <syscall.h>
 #include <signal.h>
 #include <stdint.h>
+#include <fs/vfs.h>
 
 #define TASK_RUNNING    0
 #define TASK_DEAD       1
@@ -40,6 +41,12 @@ struct task_struct {
     long state;
     long counter;
     long preempt_count;
+
+    // file system
+    int fd_num;
+    struct vnode* cwd;
+    struct file* fd_table[16];
+
 
     void* kernel_stack;
     void* user_stack;

@@ -7,6 +7,7 @@
 #include <signal.h>
 #include <allocator.h>
 #include <mm.h>
+#include <fs/vfs.h>
 
 void sys_getpid(struct trap_frame* regs)
 {
@@ -123,9 +124,70 @@ void sys_sigreturn(struct trap_frame* regs)
     preempt_enable();
 }
 
-void sys_test(struct trap_frame* regs)
+// int open(const char *pathname, int flags);
+void sys_open(struct trap_frame* regs)
 {
-    printf("[*] Testing syscall 8\r\n");
+    char* pathname = regs->regs[0];
+    int flags = regs->regs[1];
+
+    regs->regs[0] = open(pathname, flags);
+}
+
+// int close(int fd);
+void sys_close(struct trap_frame* regs)
+{
+    int fd = regs->regs[0];
+    regs->regs[0] = close(fd);
+}
+
+// long write(int fd, const void *buf, unsigned long count);
+void sys_write(struct trap_frame* regs)
+{
+    int fd = regs->regs[0];
+    void *buf = regs->regs[1];
+    unsigned long count = regs->regs[2];
+    
+    regs->regs[0] = write(fd, buf, count);
+}
+
+// long read(int fd, void *buf, unsigned long count);
+void sys_read(struct trap_frame* regs)
+{
+    int fd = regs->regs[0];
+    void *buf = regs->regs[1];
+    unsigned long count = regs->regs[2];
+    
+    regs->regs[0] = read(fd, buf, count);
+}
+
+// int mkdir(const char *pathname, unsigned mode);
+void sys_mkdir(struct trap_frame* regs)
+{
+    char *pathname = regs->regs[0];
+    unsigned mode = regs->regs[1];
+    
+    regs->regs[0] = mkdir(pathname, mode);
+}
+
+// int mount(const char *src, const char *target, const char *filesystem, unsigned long flags, const void *data);
+void sys_mount(struct trap_frame* regs)
+{
+    char *src = regs->regs[0];
+    char *target = regs->regs[1];
+    char *filesystem = regs->regs[2];
+    unsigned long flags = regs->regs[3];
+    void *data = regs->regs[4];
+    
+    regs->regs[0] = mount(src, target, filesystem, flags, data);
+}
+
+// int chdir(const char *path);
+void sys_chdir(struct trap_frame* regs)
+{
+    printf("sys_chdir\r\n");
+
+    char* path = regs->regs[0];
+    regs->regs[0] = chdir(path);
 }
 
 typedef void *(*func)(struct trap_frame*);
@@ -141,7 +203,13 @@ func syscall_table[] = {
     (func) sys_signal,
     (func) sys_sigkill,
     (func) sys_sigreturn,
-    (func) sys_test
+    (func) sys_open,
+    (func) sys_close,
+    (func) sys_write,
+    (func) sys_read,
+    (func) sys_mkdir,
+    (func) sys_mount,
+    (func) sys_chdir
 };
 
 void syscall_handler(struct trap_frame* regs)

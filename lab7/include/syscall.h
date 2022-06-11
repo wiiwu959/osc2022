@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#define __NR_syscalls   12
+#define __NR_syscalls   18
 
 #define SYS_GETPID      0 		// syscall numbers 
 #define SYS_UARTREAD    1 	
@@ -16,7 +16,13 @@
 #define SYS_SIGNAL      8
 #define SYS_SIGKILL     9
 #define SYS_SIGRETURN   10
-#define TEST            11
+#define SYS_OPEN        11
+#define SYS_CLOSE       12
+#define SYS_WRITE       13
+#define SYS_READ        14
+#define SYS_MKDIR       15
+#define SYS_MOUNT       16
+#define SYS_CHDIR       17
 
 struct trap_frame {
     unsigned long regs[31];
@@ -46,8 +52,6 @@ void sys_exit(struct trap_frame* regs);
 void sys_mbox_call(struct trap_frame* regs);
 // void sys_kill(int pid);
 void sys_kill(struct trap_frame* regs);
-// void sys_test();
-void sys_test(struct trap_frame* regs);
 
 // signal
 // void sys_signal(int SIGNAL, void (*handler)())
@@ -55,5 +59,21 @@ void sys_signal(struct trap_frame* regs);
 // void sys_sigkill(int pid, int SIGNAL)
 void sys_sigkill(struct trap_frame* regs);
 void sys_sigreturn(struct trap_frame* regs);
+
+// file system
+// int open(const char *pathname, int flags);
+void sys_open(struct trap_frame* regs);
+// int close(int fd);
+void sys_close(struct trap_frame* regs);
+// long write(int fd, const void *buf, unsigned long count);
+void sys_write(struct trap_frame* regs);
+// long read(int fd, void *buf, unsigned long count);
+void sys_read(struct trap_frame* regs);
+// int mkdir(const char *pathname, unsigned mode);
+void sys_mkdir(struct trap_frame* regs);
+// int mount(const char *src, const char *target, const char *filesystem, unsigned long flags, const void *data);
+void sys_mount(struct trap_frame* regs);
+// int chdir(const char *path);
+void sys_chdir(struct trap_frame* regs);
 
 #endif  /*_SYS_H */
