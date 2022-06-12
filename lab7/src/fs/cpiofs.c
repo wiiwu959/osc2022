@@ -91,7 +91,6 @@ int cpiofs_setup_mount(struct filesystem *fs, struct mount *mount)
     }
 
     root_node->parent = mount->root;
-    root_node->mount = mount;
     mount->fs = fs;
     mount->root = root_node;
 }

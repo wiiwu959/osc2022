@@ -6,6 +6,10 @@
 #include <mm.h>
 #include <sched.h>
 
+#include <fs/tmpfs.h>
+#include <fs/cpiofs.h>
+#include <fs/uartfs.h>
+
 int register_filesystem(struct filesystem* fs)
 {
     // register the file system to the kernel.
@@ -71,7 +75,6 @@ int get_component(char** pathname, struct vnode** target)
     struct vnode* child_target = NULL;
 
     while (component_name) {
-        printf("[*] component_name now is %s\r\n", component_name);
         if (!strcmp(component_name, ".")) {
             child_target = cwd;
         } else if (!strcmp(component_name, "..")) {
@@ -92,7 +95,6 @@ int get_component(char** pathname, struct vnode** target)
         } else {
             cwd->v_ops->lookup(cwd, &child_target, component_name);
             if (child_target == NULL) {
-                printf("[*] vfs: file or dir not found.\r\n");
                 *pathname = component_name;
                 *target = cwd;
                 if (*left_pathname == '\0') { return 1; }
@@ -117,6 +119,17 @@ int get_component(char** pathname, struct vnode** target)
 void vfs_init()
 {
     INIT_LIST_HEAD(&registered_list);
+    register_filesystem(&tmpfs);
+    vfs_mount_rootfs("tmpfs");
+
+    register_filesystem(&cpiofs);
+    vfs_mkdir("/initramfs");
+    vfs_mount("/initramfs", "cpiofs");
+
+    register_filesystem(&uartfs);
+    vfs_mkdir("/dev");
+    vfs_mkdir("/dev/uart");
+    vfs_mount("/dev/uart", "uartfs");
 }
 
 // mount filesystem as rootfs
@@ -150,8 +163,6 @@ int vfs_mount_rootfs(const char* filesystem)
 int vfs_open(const char* pathname, int flags, struct file** target)
 {
     // 1. Lookup pathname
-    printf("[*] VFS opening...\r\n");
-    
     char* component_name = pathname;
     struct vnode* child_target;
     int ret = get_component(&component_name, &child_target);
@@ -190,7 +201,6 @@ int vfs_open(const char* pathname, int flags, struct file** target)
     
     // lookup error code shows if file exist or not or other error occurs
     // 4. Return error code if fails
-    printf("[*] vfs_open finished...\r\n");
     return 0;
 }
 
@@ -256,7 +266,6 @@ int vfs_mount(const char *target, const char *filesystem)
 
     // find the vnode to mount
     struct vnode* to_mount;
-    printf("[*] Target is %s.\r\n", target);
     int ret = vfs_lookup(target, &to_mount);
     if (ret != 0) {
         printf("[*] Mount filesystem %s to %s failed.\r\n", filesystem, target);
@@ -276,7 +285,6 @@ int vfs_mount(const char *target, const char *filesystem)
 // return 1 if the last file or dir not found
 int vfs_lookup(const char* pathname, struct vnode** target)
 {
-    printf("[*] VFS lookup...\r\n");
     struct vnode* child_target = NULL;
     char* component_name = pathname;
     int ret = get_component(&component_name, &child_target);

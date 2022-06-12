@@ -184,8 +184,6 @@ void sys_mount(struct trap_frame* regs)
 // int chdir(const char *path);
 void sys_chdir(struct trap_frame* regs)
 {
-    printf("sys_chdir\r\n");
-
     char* path = regs->regs[0];
     regs->regs[0] = chdir(path);
 }

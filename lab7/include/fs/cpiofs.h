@@ -23,7 +23,6 @@ struct cpio_content {
     struct vnode** child_list;
 };
 
-struct vnode *cpiofs_root;
 extern struct filesystem cpiofs;
 
 int cpiofs_setup_mount(struct filesystem *fs, struct mount *mount);

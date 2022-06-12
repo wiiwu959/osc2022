@@ -75,11 +75,15 @@ struct task_struct* sched_new_task()
     ts->preempt_count = 0;
     ts->counter = 0;
 
+    // filesystem related
     ts->cwd = rootfs->root;
-    ts->fd_num = -1;
     for (int i = 0; i < 16; i++) {
         ts->fd_table[i] = NULL;
     }
+    vfs_open("/dev/uart", 0, &ts->fd_table[0]);
+    vfs_open("/dev/uart", 0, &ts->fd_table[1]);
+    vfs_open("/dev/uart", 0, &ts->fd_table[2]);
+    ts->fd_num = 2;
 
     INIT_LIST_HEAD(&ts->sig_info);
     ts->sig_context = NULL;

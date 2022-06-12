@@ -25,17 +25,12 @@ struct filesystem tmpfs = {
 
 int tmpfs_setup_mount(struct filesystem *fs, struct mount *mount)
 {
-    struct vnode* root_node;
+    struct vnode* root_node = new_vnode("/", TMP_DIR);
     if (mount->root == NULL) {
-        root_node = new_vnode("/", TMP_DIR);
         root_node->parent = NULL;
     } else {
-        // root_node = mount->root;
-        root_node = new_vnode("/", TMP_DIR);
         root_node->parent = mount->root;
     }
-
-    root_node->mount = mount;
 
     mount->fs = fs;
     mount->root = root_node;
