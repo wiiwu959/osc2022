@@ -38,6 +38,7 @@ struct filesystem {
 struct file_operations {
     int (*write)(struct file* file, const void* buf, size_t len);
     int (*read)(struct file* file, void* buf, size_t len);
+    int (*sync)();
     // long lseek64(struct file* file, long offset, int whence);
 };
 
@@ -66,6 +67,7 @@ int vfs_open(const char* pathname, int flags, struct file** target);
 int vfs_close(struct file* file);
 int vfs_write(struct file* file, const void* buf, size_t len);
 int vfs_read(struct file* file, void* buf, size_t len);
+int vfs_sync(void);
 
 // vnode operation
 int vfs_mkdir(const char* pathname);
@@ -92,5 +94,7 @@ int mkdir(const char *pathname, unsigned mode);
 int mount(const char *src, const char *target, const char *filesystem, unsigned long flags, const void *data);
 // syscall number : 17
 int chdir(const char *path);
+// syscall number : 20
+void sync(void);
 
 #endif  /* _VFS_H */

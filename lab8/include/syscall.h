@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#define __NR_syscalls   18
+#define __NR_syscalls   21
 
 #define SYS_GETPID      0 		// syscall numbers 
 #define SYS_UARTREAD    1 	
@@ -23,6 +23,7 @@
 #define SYS_MKDIR       15
 #define SYS_MOUNT       16
 #define SYS_CHDIR       17
+#define SYS_SYNC        20
 
 struct trap_frame {
     unsigned long regs[31];
@@ -75,5 +76,8 @@ void sys_mkdir(struct trap_frame* regs);
 void sys_mount(struct trap_frame* regs);
 // int chdir(const char *path);
 void sys_chdir(struct trap_frame* regs);
+// void sync();
+void sys_sync(struct trap_frame* regs);
+void sys_test(struct trap_frame* regs);
 
 #endif  /*_SYS_H */

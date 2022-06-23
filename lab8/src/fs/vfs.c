@@ -9,6 +9,8 @@
 #include <fs/tmpfs.h>
 #include <fs/cpiofs.h>
 #include <fs/uartfs.h>
+#include <fs/fat32.h>
+#include <fs/sdhost.h>
 
 int register_filesystem(struct filesystem* fs)
 {
@@ -130,6 +132,11 @@ void vfs_init()
     vfs_mkdir("/dev");
     vfs_mkdir("/dev/uart");
     vfs_mount("/dev/uart", "uartfs");
+
+    sd_init();
+    register_filesystem(&fat32);
+    vfs_mkdir("/boot");
+    vfs_mount("/boot", "fat32");
 }
 
 // mount filesystem as rootfs
@@ -411,4 +418,10 @@ int chdir(const char *path)
 
     current->cwd = target;
     return ret;
+}
+
+// syscall number 20
+void sync()
+{
+    
 }

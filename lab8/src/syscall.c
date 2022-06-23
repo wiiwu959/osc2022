@@ -188,6 +188,17 @@ void sys_chdir(struct trap_frame* regs)
     regs->regs[0] = chdir(path);
 }
 
+void sys_sync(struct trap_frame* regs)
+{
+    // vfs_sync
+    sync();
+}
+
+void sys_test(struct trap_frame* regs)
+{
+    printf("No syscall assigned.\r\n");
+}
+
 typedef void *(*func)(struct trap_frame*);
 func syscall_table[] = {
     (func) sys_getpid,
@@ -207,7 +218,10 @@ func syscall_table[] = {
     (func) sys_read,
     (func) sys_mkdir,
     (func) sys_mount,
-    (func) sys_chdir
+    (func) sys_chdir,
+    (func) sys_test,
+    (func) sys_test,
+    (func) sys_sync
 };
 
 void syscall_handler(struct trap_frame* regs)

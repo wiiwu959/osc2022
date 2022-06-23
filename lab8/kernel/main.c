@@ -28,7 +28,7 @@ void main(char* fdt)
     vfs_init();    
     sched_init();
 
-    exec_program("/initramfs/vfs1.img");
+    exec_program("/initramfs/vfs2.img");
 
     enable_interrupt();
     // shell();
